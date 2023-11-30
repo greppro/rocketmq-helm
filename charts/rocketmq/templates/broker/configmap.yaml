@@ -21,11 +21,10 @@ data:
     fi
 
     export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
-    export CLASSPATH=".:${ROCKETMQ_HOME}/conf:${CLASSPATH}"
+    export CLASSPATH=".:${ROCKETMQ_HOME}/lib/*:${ROCKETMQ_HOME}/conf"
     
     JAVA_OPT="${JAVA_OPT} -server"
     JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_BROKER}"
-    JAVA_OPT="${JAVA_OPT} -Djava.ext.dirs=${JAVA_HOME}/jre/lib/ext:${ROCKETMQ_HOME}/lib"
     JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_EXT}"
     JAVA_OPT="${JAVA_OPT} -cp ${CLASSPATH}"
 

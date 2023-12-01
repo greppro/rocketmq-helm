@@ -6,7 +6,7 @@ https://github.com/itboon/rocketmq-helm
 
 - Kubernetes 1.18+
 - Helm 3.3+
-- RocketMQ `>= 4.5` (`5.x` 未测试)
+- RocketMQ `>= 4.5`
 
 ## 添加 helm 仓库
 
@@ -59,7 +59,23 @@ helm upgrade --install rocketmq \
 
 > 具体资源配额请根据实际环境调整，参考 [examples](https://github.com/itboon/rocketmq-helm/tree/main/examples)
 
-## 镜像仓库
+## 部署详情
+
+### RocketMQ 5.x Proxy
+
+5.x 版本中新增了 Proxy 模块，默认不会部署，用户可以按需启用。
+
+``` yaml
+image:
+  repository: apache/rocketmq
+  tag: 5.1.4
+
+proxy:
+  enabled: true
+  replicaCount: 1
+```
+
+### 镜像仓库
 
 ``` yaml
 image:
@@ -73,6 +89,33 @@ image:
 helm upgrade --install rocketmq \
   --namespace rocketmq-demo \
   --create-namespace \
-  --set image.tag="4.9.5" \
+  --set image.tag="5.1.4" \
   rocketmq-repo/rocketmq
+```
+
+### 内存管理
+
+集群每个模块提供堆内存管理，例如 `--set broker.master.jvm.maxHeapSize="1024M"` 将堆内存设置为 `1024M`，默认 `Xms` `Xmx` 相等。堆内存配额应该与 Pod `resources` 相匹配。
+
+> 可使用 `jvm.javaOptsOverride` 对 jvm 参数进行修改，设置了此参数则 `maxHeapSize` 失效。
+
+```yaml
+broker:
+  master:
+    jvm:
+      maxHeapSize: 1024M
+      # javaOptsOverride: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 2Gi
+
+nameserver:
+  jvm:
+    maxHeapSize: 1024M
+    # javaOptsOverride: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 2Gi
 ```

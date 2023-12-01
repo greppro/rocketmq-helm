@@ -56,7 +56,7 @@ spec:
         - name: ROCKETMQ_PROCESS_ROLE
           value: {{ $clusterRole }}
         - name: ROCKETMQ_JAVA_OPTIONS_HEAP
-          {{- $maxHeapSize := .Values.proxy.jvm.maxHeapSize }}
+          {{- $maxHeapSize := .Values.nameserver.jvm.maxHeapSize }}
           value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
         {{- if .Values.proxy.jvm.javaOptsOverride }}
         - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE

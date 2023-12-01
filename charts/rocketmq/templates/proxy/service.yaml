@@ -1,0 +1,37 @@
+{{- if .Values.proxy.enabled -}}
+{{- $clusterRole := "proxy" -}}
+{{- $fullName := include "rocketmq.proxy.fullname" . -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName | quote }}
+  labels:
+    {{- include "rocketmq.labels" . | nindent 4 }}
+    component: {{ $clusterRole }}
+  {{- with .Values.proxy.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.proxy.service.type }}
+  type: {{ .Values.proxy.service.type }}
+  {{- end }}
+  ports:
+  - port: 8080
+    name: main
+    protocol: TCP
+    targetPort: 8080
+    {{- if and (eq .Values.proxy.service.type "NodePort") .Values.proxy.service.nodePort }}
+    nodePort: {{ .Values.proxy.service.nodePort }}
+    {{- end }}
+  - port: 8081
+    name: grpc
+    protocol: TCP
+    targetPort: 8081
+    {{- if and (eq .Values.proxy.service.type "NodePort") .Values.proxy.service.nodePortGrpc }}
+    nodePort: {{ .Values.proxy.service.nodePortGrpc }}
+    {{- end }}
+  selector:
+    {{- include "rocketmq.selectorLabels" . | nindent 4 }}
+    component: proxy
+{{- end }}

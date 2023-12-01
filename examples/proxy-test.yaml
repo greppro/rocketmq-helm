@@ -30,6 +30,16 @@ nameserver:
       cpu: 50m
       memory: 1Gi
 
+proxy:
+  enabled: true
+  replicaCount: 1
+  jvm:
+    maxHeapSize: 512M
+  resources:
+    requests:
+      cpu: 50m
+      memory: 1Gi
+
 dashboard:
   enabled: true
   replicaCount: 1

@@ -1,8 +1,10 @@
-clusterName: "cluster-test"
+## 已关闭持久化存储
+
+clusterName: "cluster-experimental"
 
 image:
   repository: "apache/rocketmq"
-  tag: "4.9.7"
+  tag: "5.1.4"
 
 broker:
   size:
@@ -10,18 +12,31 @@ broker:
     replica: 0
 
   persistence:
-    enabled: true
-    size: 8Gi
+    enabled: false
 
   master:
     jvm:
-      maxHeapSize: 1024M
+      maxHeapSize: 512M
+      # javaOptsOverride: ""
     resources:
+      limits:
+        cpu: 4
+        memory: 16Gi
       requests:
-        cpu: 100m
-        memory: 2Gi
+        cpu: 50m
+        memory: 1Gi
 
 nameserver:
+  replicaCount: 1
+  jvm:
+    maxHeapSize: 512M
+  resources:
+    requests:
+      cpu: 50m
+      memory: 1Gi
+
+proxy:
+  enabled: true
   replicaCount: 1
   jvm:
     maxHeapSize: 512M

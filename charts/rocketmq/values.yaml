@@ -12,7 +12,10 @@ broker:
   
   master:
     brokerRole: ASYNC_MASTER
-    jvmMemory: "-Xms1g -Xmx1g"
+    ## jvmMemory: "-Xms1g -Xmx1g"
+    jvm:
+      maxHeapSize: 1024M
+      # javaOptsOverride: ""
     resources:
       limits:
         cpu: 4
@@ -22,7 +25,10 @@ broker:
         memory: 2Gi
   
   replica:
-    jvmMemory: "-Xms1g -Xmx1g"
+    ## jvmMemory: "-Xms1g -Xmx1g"
+    jvm:
+      maxHeapSize: 1024M
+      # javaOptsOverride: ""
     resources:
       limits:
         cpu: 4
@@ -61,6 +67,10 @@ broker:
 nameserver:
   replicaCount: 1
 
+  jvm:
+    maxHeapSize: 1024M
+    # javaOptsOverride: ""
+
   resources:
     limits:
       cpu: 2
@@ -88,6 +98,39 @@ nameserver:
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3
+
+proxy:
+  enabled: false
+  replicaCount: 1
+  jvm:
+    maxHeapSize: 1024M
+    # javaOptsOverride: ""
+
+  resources:
+    limits:
+      cpu: 2
+      memory: 6Gi
+    requests:
+      cpu: 100m
+      memory: 2Gi
+
+  affinityOverride: {}
+  tolerations: []
+  nodeSelector: {}
+
+  ## proxy.readinessProbe
+  readinessProbe:
+    tcpSocket:
+      port: main
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  ## proxy.service
+  service:
+    annotations: {}
+    type: ClusterIP
 
 dashboard:
   enabled: true

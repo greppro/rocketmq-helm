@@ -1,0 +1,65 @@
+## 已关闭持久化存储
+
+clusterName: "cluster-experimental"
+
+image:
+  repository: "apache/rocketmq"
+  tag: "5.1.4"
+
+broker:
+  size:
+    master: 2
+    replica: 1
+
+  persistence:
+    enabled: false
+
+  master:
+    jvm:
+      maxHeapSize: 512M
+      # javaOptsOverride: ""
+    resources:
+      requests:
+        cpu: 50m
+        memory: 512Mi
+  replica:
+    jvm:
+      maxHeapSize: 512M
+      # javaOptsOverride: ""
+    resources:
+      requests:
+        cpu: 50m
+        memory: 512Mi
+
+nameserver:
+  replicaCount: 2
+  jvm:
+    maxHeapSize: 512M
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+
+proxy:
+  enabled: true
+  replicaCount: 2
+  jvm:
+    maxHeapSize: 256M
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+
+dashboard:
+  enabled: true
+  replicaCount: 1
+
+  ingress:
+    enabled: false
+    className: "nginx"
+    hosts:
+      - host: rocketmq-dashboard.example.com
+    tls: []
+    #  - secretName: example-tls
+    #    hosts:
+    #      - rocketmq-dashboard.example.com

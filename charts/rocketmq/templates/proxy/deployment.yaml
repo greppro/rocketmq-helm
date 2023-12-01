@@ -1,32 +1,31 @@
-{{- $fullName := include "rocketmq.nameserver.fullname" . -}}
-{{- $clusterRole := "nameserver" -}}
+{{- if .Values.proxy.enabled -}}
+{{- $clusterRole := "proxy" -}}
+{{- $fullName := include "rocketmq.proxy.fullname" . -}}
 {{- $configmapName := include "rocketmq.configmap.fullname" . -}}
 {{- $image := printf "%s:%s" .Values.image.repository .Values.image.tag }}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: {{ $fullName | quote }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
 spec:
-  podManagementPolicy: OrderedReady
-  replicas: {{ .Values.nameserver.replicaCount }}
+  replicas: {{ .Values.proxy.replicaCount }}
   selector:
     matchLabels:
       {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
       component: {{ $clusterRole }}
-  serviceName: {{ $fullName | quote }}
   template:
     metadata:
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
         component: {{ $clusterRole }}
     spec:
-      {{- with $.Values.nameserver.nodeSelector }}
+      {{- with $.Values.proxy.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if not $.Values.nameserver.affinityOverride }}
+      {{- if not $.Values.proxy.affinityOverride }}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -35,26 +34,31 @@ spec:
               labelSelector:
                 matchLabels:
                   {{- include "rocketmq.selectorLabels" $ | nindent 18 }}
-                  component: nameserver
+                  component: proxy
               topologyKey: kubernetes.io/hostname
-      {{- else if $.Values.nameserver.affinityOverride }}
+      {{- else if $.Values.proxy.affinityOverride }}
       affinity:
-        {{- toYaml $.Values.nameserver.affinityOverride | nindent 8 }}
+        {{- toYaml $.Values.proxy.affinityOverride | nindent 8 }}
       {{- end }}
-      {{- with $.Values.nameserver.tolerations }}
+      {{- with $.Values.proxy.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: nameserver
+      - name: proxy
         image: {{ $image | quote }}
         imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
         command:
           - sh
+          #- mqnamesrv
           - /mq-server-start.sh
         env:
+        - name: NAMESRV_ADDR
+          value: {{ include "rocketmq.nameserver.addr" . }}
         - name: ROCKETMQ_PROCESS_ROLE
           value: {{ $clusterRole }}
+        - name: RMQ_PROXY_CONFIG_PATH
+          value: /etc/rocketmq/proxy.json
         - name: ROCKETMQ_JAVA_OPTIONS_HEAP
           {{- $maxHeapSize := .Values.proxy.jvm.maxHeapSize }}
           value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
@@ -63,32 +67,35 @@ spec:
           value: {{ .Values.proxy.jvm.javaOptsOverride }}
         {{- end }}
         ports:
-        - containerPort: 9876
-          name: main
+        - name: main
+          containerPort: 8080
+          protocol: TCP
+        - name: grpc
+          containerPort: 8081
           protocol: TCP
         resources:
-          {{- toYaml .Values.nameserver.resources | nindent 10 }}
-        {{- with .Values.nameserver.readinessProbe }}
+          {{- toYaml .Values.proxy.resources | nindent 10 }}
+        {{- with .Values.proxy.readinessProbe }}
         readinessProbe:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-        {{- with .Values.nameserver.livenessProbe }}
+        {{- with .Values.proxy.livenessProbe }}
         livenessProbe:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         lifecycle:
           preStop:
             exec:
-              command: ["sh", "-c", "sleep 5; ./mqshutdown namesrv"]
+              command: ["sh", "-c", "sleep 5; ./mqshutdown {{ $clusterRole }}"]
         volumeMounts:
         - mountPath: /mq-server-start.sh
           name: mq-server-start-sh
           subPath: mq-server-start.sh
-        - mountPath: /home/rocketmq/logs
-          name: nameserver-storage
-          subPath: logs
+        - mountPath: /etc/rocketmq/proxy.json
+          name: proxy-json
+          subPath: proxy.json
       dnsPolicy: ClusterFirst
-      terminationGracePeriodSeconds: {{ $.Values.nameserver.terminationGracePeriodSeconds | default 15 }}
+      terminationGracePeriodSeconds: {{ $.Values.proxy.terminationGracePeriodSeconds | default 15 }}
       volumes:
       - configMap:
           items:
@@ -96,20 +103,10 @@ spec:
             path: mq-server-start.sh
           name: {{ $configmapName }}
         name: mq-server-start-sh
-  {{- if not $.Values.nameserver.persistence.enabled }}
-      - name: nameserver-storage
-        emptyDir: {}
-  {{- else }}
-  volumeClaimTemplates:
-    - metadata:
-        name: nameserver-storage
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        {{- with $.Values.nameserver.persistence.storageClass }}
-        storageClassName: {{ if (eq "-" .) }}""{{ else }}{{ . }}{{ end }}
-        {{- end }}
-        resources:
-          requests:
-            storage: {{ $.Values.nameserver.persistence.size | quote }}
-  {{- end }}
+      - configMap:
+          items:
+          - key: proxy.json
+            path: proxy.json
+          name: {{ $configmapName }}
+        name: proxy-json
+{{- end }}

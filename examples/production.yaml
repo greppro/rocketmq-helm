@@ -19,7 +19,8 @@ broker:
   # 主节点资源分配
   master:
     brokerRole: ASYNC_MASTER
-    jvmMemory: "-Xms4g -Xmx4g"
+    jvm:
+      maxHeapSize: 4096M
     resources:
       limits:
         cpu: 4
@@ -30,7 +31,8 @@ broker:
   
   # 副节点资源分配
   replica:
-    jvmMemory: "-Xms2g -Xmx2g"
+    jvm:
+      maxHeapSize: 2048M
     resources:
       limits:
         cpu: 4
@@ -41,7 +43,8 @@ broker:
 
 nameserver:
   replicaCount: 3
-
+  jvm:
+    maxHeapSize: 1024M
   resources:
     limits:
       cpu: 4

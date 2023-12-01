@@ -1,21 +1,21 @@
 {{- $fullName := include "rocketmq.fullname" . -}}
-{{- $nameserverFullName := include "rocketmq.nameserver.fullname" . -}}
-{{- $brokerCmName := include "rocketmq.broker.configmap.fullname" . -}}
-{{- $masterSize := int .Values.broker.size.master }}
-{{- $replicaCount := int (add1 .Values.broker.size.replica) }}
-{{- $nameserverReplicaCount:= int .Values.nameserver.replicaCount }}
-{{- $image := printf "%s:%s" .Values.image.repository .Values.image.tag }}
-{{- range $brokerId := until $replicaCount }}
-  {{- $brokerFullName := printf "%s-broker-master" $fullName }}
-  {{- $brokerMemory := $.Values.broker.master.jvmMemory }}
-  {{- $brokerRole := $.Values.broker.master.brokerRole }}
-  {{- $brokerConfigKey := "broker-master.conf" }}
+{{- $clusterRole := "broker" -}}
+{{- $configmapName := include "rocketmq.configmap.fullname" . -}}
+{{- $masterSize := int .Values.broker.size.master -}}
+{{- $replicaCount := int (add1 .Values.broker.size.replica) -}}
+{{- $image := printf "%s:%s" .Values.image.repository .Values.image.tag -}}
+{{- range $brokerId := until $replicaCount -}}
+  {{- $brokerFullName := printf "%s-broker-master" $fullName -}}
+  {{- $maxHeapSize := $.Values.broker.master.jvm.maxHeapSize -}}
+  {{- $javaOptsOverride := $.Values.broker.master.jvm.javaOptsOverride -}}
+  {{- $brokerRole := $.Values.broker.master.brokerRole -}}
+  {{- $brokerConfigKey := "broker-master.conf" -}}
   {{- if gt $brokerId 0 }}
-    {{- /* master $brokerId = 0, slave $brokerId > 0 */}}
-    {{- $brokerFullName = printf "%s-broker-replica-id%d" $fullName $brokerId }}
-    {{- $brokerMemory = $.Values.broker.replica.jvmMemory }}
-    {{- $brokerRole = "SLAVE" }}
-    {{- $brokerConfigKey = "broker-slave.conf" }}
+    {{- $brokerFullName = printf "%s-broker-replica-id%d" $fullName $brokerId -}}
+    {{- $maxHeapSize = $.Values.broker.replica.jvm.maxHeapSize -}}
+    {{- $javaOptsOverride = $.Values.broker.replica.jvm.javaOptsOverride -}}
+    {{- $brokerRole = "SLAVE" -}}
+    {{- $brokerConfigKey = "broker-slave.conf" -}}
   {{- end }}
 ---
 apiVersion: apps/v1
@@ -32,14 +32,14 @@ spec:
   selector:
     matchLabels:
       {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
-      component: broker
+      component: {{ $clusterRole }}
       broker: {{ $brokerFullName }}
   serviceName: ""
   template:
     metadata:
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
-        component: broker
+        component: {{ $clusterRole }}
         broker: {{ $brokerFullName }}
     spec:
       {{- with $.Values.broker.nodeSelector }}
@@ -74,23 +74,22 @@ spec:
         imagePullPolicy: {{ $.Values.image.pullPolicy | default "IfNotPresent" }}
         command:
           - sh
-          - /runbroker.sh
+          - /mq-server-start.sh
         env:
+        - name: ROCKETMQ_PROCESS_ROLE
+          value: {{ $clusterRole }}
         - name: NAMESRV_ADDR
-          #value: rocketmq-nameserver:9876
-          value: {{ range $i := until $nameserverReplicaCount }}{{ if gt $i 0 }}{{ printf ";" }}{{ end }}{{ printf "%s-%d.%s:9876" $nameserverFullName $i $nameserverFullName }}{{ end }}
-        {{- /*
-        #- name: BROKER_CLUSTER_NAME
-        #  value: {{ $.Values.clusterName | quote }}
-        #- name: BROKER_NAME
-        #  value: {{ $brokerName | quote }}
-        */}}
+          value: {{ include "rocketmq.nameserver.addr" $ }}
         - name: ROCKETMQ_CONF_brokerId
           value: {{ $brokerId | quote }}
         - name: ROCKETMQ_CONF_brokerRole
           value: {{ $brokerRole | quote }}
-        - name: JAVA_OPT_BROKER
-          value: "{{ $brokerMemory }} -XX:+UseG1GC"
+        - name: ROCKETMQ_JAVA_OPTIONS_HEAP
+          value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
+        {{- if $javaOptsOverride }}
+        - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
+          value: {{ $javaOptsOverride }}
+        {{- end }}
         {{- with $.Values.broker.commonEnvs }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -125,8 +124,6 @@ spec:
           preStop:
             exec:
               command: ["sh", "-c", "sleep 5; ./mqshutdown broker"]
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /home/rocketmq/logs
           name: broker-storage
@@ -137,9 +134,9 @@ spec:
         - mountPath: /etc/rocketmq/broker-base.conf
           name: broker-base-config
           subPath: broker-base.conf
-        - mountPath: /runbroker.sh
-          name: runbroker-sh
-          subPath: runbroker.sh
+        - mountPath: /mq-server-start.sh
+          name: mq-server-start-sh
+          subPath: mq-server-start.sh
       dnsPolicy: ClusterFirst
       terminationGracePeriodSeconds: {{ $.Values.broker.terminationGracePeriodSeconds | default 30 }}
       volumes:
@@ -147,14 +144,14 @@ spec:
           items:
           - key: broker-base.conf
             path: broker-base.conf
-          name: {{ $brokerCmName }}
+          name: {{ $configmapName }}
         name: broker-base-config
       - configMap:
           items:
-          - key: runbroker.sh
-            path: runbroker.sh
-          name: {{ $brokerCmName }}
-        name: runbroker-sh
+          - key: mq-server-start.sh
+            path: mq-server-start.sh
+          name: {{ $configmapName }}
+        name: mq-server-start-sh
   {{- if not $.Values.broker.persistence.enabled }}
       - name: broker-storage
         emptyDir: {}

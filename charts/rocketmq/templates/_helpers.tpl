@@ -62,6 +62,13 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+configmap
+*/}}
+{{- define "rocketmq.configmap.fullname" -}}
+{{ include "rocketmq.fullname" . }}-server-config
+{{- end }}
+
+{{/*
 broker-cm
 */}}
 {{- define "rocketmq.broker.configmap.fullname" -}}
@@ -76,8 +83,28 @@ nameserver
 {{- end }}
 
 {{/*
+proxy
+*/}}
+{{- define "rocketmq.proxy.fullname" -}}
+{{ include "rocketmq.fullname" . }}-proxy
+{{- end }}
+
+{{/*
 dashboard
 */}}
 {{- define "rocketmq.dashboard.fullname" -}}
 {{ include "rocketmq.fullname" . }}-dashboard
+{{- end }}
+
+
+{{/*
+env NAMESRV_ADDR
+*/}}
+{{- define "rocketmq.nameserver.addr" -}}
+{{- $nsFullName := include "rocketmq.nameserver.fullname" . -}}
+{{- $nsReplica := int .Values.nameserver.replicaCount -}}
+  {{- range $i := until $nsReplica -}}
+  {{- if gt $i 0 }}{{ printf ";" }}{{ end -}}
+  {{- printf "%s-%d.%s:9876" $nsFullName $i $nsFullName -}}
+  {{- end -}}
 {{- end }}

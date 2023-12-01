@@ -17,7 +17,7 @@ broker:
   master:
     jvm:
       maxHeapSize: 512M
-      javaOptsOverride: "-Xmx600M"
+      # javaOptsOverride: "-Xmx600M"
     resources:
       limits:
         cpu: 4

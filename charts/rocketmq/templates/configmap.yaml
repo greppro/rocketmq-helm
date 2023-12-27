@@ -28,7 +28,7 @@ data:
       exit 500
     fi
 
-    export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+    export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
     export CLASSPATH=".:${ROCKETMQ_HOME}/conf:${ROCKETMQ_HOME}/lib/*:${CLASSPATH}"
 
     JAVA_OPT="${JAVA_OPT} -server"

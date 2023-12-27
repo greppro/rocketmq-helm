@@ -104,7 +104,7 @@ broker:
   master:
     jvm:
       maxHeapSize: 1024M
-      # javaOptsOverride: ""
+      # javaOptsOverride: "-Xms1024M -Xmx1024M -XX:+UseG1GC"
     resources:
       requests:
         cpu: 100m
@@ -113,7 +113,7 @@ broker:
 nameserver:
   jvm:
     maxHeapSize: 1024M
-    # javaOptsOverride: ""
+    # javaOptsOverride: "-Xms1024M -Xmx1024M -XX:+UseG1GC"
   resources:
     requests:
       cpu: 100m

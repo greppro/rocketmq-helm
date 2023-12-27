@@ -3,7 +3,7 @@ name: rocketmq
 description: RocketMQ Helm chart
 type: application
 
-version: 3.0.2
+version: 3.0.3
 appVersion: '4.9.7'
 
 maintainers:

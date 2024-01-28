@@ -43,7 +43,7 @@ jobs:
           echo "[env] GITHUB_REF_NAME: $GITHUB_REF_NAME"
           if echo "$GITHUB_REF_NAME" | grep -E 'v[0-9.]+(-.*)?'; then
             app_version=$(echo "$GITHUB_REF_NAME" | cut -d "-" -f1 | sed 's/^v//')
-            dl_url=""https://dist.apache.org/repos/dist/release/rocketmq/${app_version}/rocketmq-all-${app_version}-bin-release.zip"
+            dl_url="https://dist.apache.org/repos/dist/release/rocketmq/${app_version}/rocketmq-all-${app_version}-bin-release.zip"
             curl -sI "$dl_url" | grep '200 OK'
             if [[ $? == "0" ]]; then
               echo "is_release=true" >> $GITHUB_OUTPUT

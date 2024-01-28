@@ -30,6 +30,10 @@ COPY mq-server-start.sh /
 COPY entrypoint.sh /
 COPY broker-base.conf /etc/rocketmq/
 
+RUN set -ex \
+  ; rm -f "$ROCKETMQ_HOME/conf/plain_acl.yml" \
+  ; rm -rf "$ROCKETMQ_HOME/conf/acl"
+
 WORKDIR $ROCKETMQ_HOME
 EXPOSE 9876 10909 10911 10912
 

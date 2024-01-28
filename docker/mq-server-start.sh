@@ -1,7 +1,7 @@
 #!/bin/bash
 
 java -version
-if [ $? -ne 0 ]; then
+if [ "$?" -ne 0 ]; then
   echo "[ERROR] Missing java runtime"
   exit 500
 fi
@@ -73,7 +73,7 @@ elif [ "$ROCKETMQ_PROCESS_ROLE" == "nameserver" ]; then
 elif [ "$ROCKETMQ_PROCESS_ROLE" == "mqnamesrv" ]; then
   set -x
   java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup
-elif  [ "$ROCKETMQ_PROCESS_ROLE" == "proxy" ]; then
+elif [ "$ROCKETMQ_PROCESS_ROLE" == "proxy" ]; then
   set -x
   if [ -f $RMQ_PROXY_CONFIG_PATH ]; then
     java ${JAVA_OPT} org.apache.rocketmq.proxy.ProxyStartup -pc $RMQ_PROXY_CONFIG_PATH

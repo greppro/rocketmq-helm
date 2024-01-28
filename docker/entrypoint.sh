@@ -38,6 +38,8 @@ start_server() {
 take_file_ownership
 if [[ "$@" = "start" ]]; then
   start_server
+elif echo "$@" | grep '/mq-server-start.sh$'; then
+  start_server
 else
   exec "$@"
 fi

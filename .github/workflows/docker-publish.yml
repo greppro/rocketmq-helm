@@ -37,13 +37,14 @@ jobs:
         env:
           DOCKERHUB_TOKEN: "${{ secrets.DOCKERHUB_TOKEN }}"
         run: |
+          set -x
           sha_short=$(git rev-parse --short HEAD)
           echo "sha_short=$sha_short" >> $GITHUB_OUTPUT
           echo "[env] GITHUB_REF_NAME: $GITHUB_REF_NAME"
           if echo "$GITHUB_REF_NAME" | grep -E 'v[0-9.]+(-.*)?'; then
             app_version=$(echo "$GITHUB_REF_NAME" | cut -d "-" -f1 | sed 's/^v//')
-            release_notes_url="https://github.com/apache/rocketmq/releases/tag/rocketmq-all-${app_version}"
-            curl -sI "$release_notes_url" | grep '200 OK'
+            dl_url=""https://dist.apache.org/repos/dist/release/rocketmq/${app_version}/rocketmq-all-${app_version}-bin-release.zip"
+            curl -sI "$dl_url" | grep '200 OK'
             if [[ $? == "0" ]]; then
               echo "is_release=true" >> $GITHUB_OUTPUT
               echo "app_version=${app_version}" >> $GITHUB_OUTPUT

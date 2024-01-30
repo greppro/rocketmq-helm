@@ -102,6 +102,7 @@ spec:
           - key: mq-server-start.sh
             path: mq-server-start.sh
           name: {{ $configmapName }}
+          defaultMode: 0755
         name: mq-server-start-sh
       - configMap:
           items:

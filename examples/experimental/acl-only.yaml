@@ -1,0 +1,10 @@
+broker:
+  aclConfigMapEnabled: true
+  config:
+    aclEnable: true
+
+  # aclConfig: |
+  #   globalWhiteRemoteAddresses:
+  #     - '*'
+  #     - 10.*.*.*
+  #     - 192.168.*.*

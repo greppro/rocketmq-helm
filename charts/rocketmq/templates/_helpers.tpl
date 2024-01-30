@@ -69,6 +69,13 @@ configmap
 {{- end }}
 
 {{/*
+acl configmap
+*/}}
+{{- define "rocketmq.acl.configmap.fullname" -}}
+{{ include "rocketmq.fullname" . }}-acl-cm
+{{- end }}
+
+{{/*
 broker-cm
 */}}
 {{- define "rocketmq.broker.configmap.fullname" -}}

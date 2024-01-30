@@ -137,6 +137,10 @@ spec:
         - mountPath: /mq-server-start.sh
           name: mq-server-start-sh
           subPath: mq-server-start.sh
+        {{- if $.Values.broker.aclConfigMapEnabled }}
+        - mountPath: /etc/rocketmq/acl
+          name: acl-config
+        {{- end }}
       dnsPolicy: ClusterFirst
       terminationGracePeriodSeconds: {{ $.Values.broker.terminationGracePeriodSeconds | default 30 }}
       volumes:
@@ -151,7 +155,13 @@ spec:
           - key: mq-server-start.sh
             path: mq-server-start.sh
           name: {{ $configmapName }}
+          defaultMode: 0755
         name: mq-server-start-sh
+      {{- if $.Values.broker.aclConfigMapEnabled }}
+      - configMap:
+          name: {{ include "rocketmq.acl.configmap.fullname" $ }}
+        name: acl-config
+      {{- end }}
   {{- if not $.Values.broker.persistence.enabled }}
       - name: broker-storage
         emptyDir: {}

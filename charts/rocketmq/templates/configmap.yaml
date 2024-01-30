@@ -44,10 +44,10 @@ data:
     update_broker_conf() {
       local key=$1
       local value=$2
-      local pattern="^${key}"
-      sed -i "/^${pattern}/d" ${BROKER_CONF_FILE}
+      sed -i "/^${key} *=/d" ${BROKER_CONF_FILE}
       echo "${key} = ${value}" >> ${BROKER_CONF_FILE}
     }
+
     init_broker_conf() {
       rm -f ${BROKER_CONF_FILE}
       cp /etc/rocketmq/broker-base.conf ${BROKER_CONF_FILE}
@@ -69,8 +69,16 @@ data:
       cat ${BROKER_CONF_FILE}
     }
 
+    init_acl_conf() {
+      if [[ -f /etc/rocketmq/acl/plain_acl.yml ]]; then
+        rm -f "${ROCKETMQ_HOME}/conf/plain_acl.yml"
+        ln -sf "/etc/rocketmq/acl" "${ROCKETMQ_HOME}/conf/acl"
+      fi
+    }
+
     if [[ "$ROCKETMQ_PROCESS_ROLE" == "broker" ]]; then
       init_broker_conf
+      init_acl_conf
       set -x
       java ${JAVA_OPT} org.apache.rocketmq.broker.BrokerStartup -c ${BROKER_CONF_FILE}
     elif [[ "$ROCKETMQ_PROCESS_ROLE" == "nameserver" ]]; then

@@ -3,17 +3,14 @@
 clusterName: "cluster-experimental"
 
 image:
-  repository: "apache/rocketmq"
+  # repository: "sir5kong/rocketmq"
+  # pullPolicy: Always
   tag: "5.1.4"
 
 broker:
   size:
-    master: 2
-    replica: 1
-  
-  # aclConfigMapEnabled: true
-  # config:
-  #   aclEnable: true
+    master: 1
+    replica: 0
 
   persistence:
     enabled: false
@@ -21,38 +18,33 @@ broker:
   master:
     jvm:
       maxHeapSize: 512M
-      # javaOptsOverride: ""
+      # javaOptsOverride: "-Xmx600M"
     resources:
+      limits:
+        cpu: 4
+        memory: 16Gi
       requests:
         cpu: 50m
-        memory: 512Mi
-  replica:
-    jvm:
-      maxHeapSize: 512M
-      # javaOptsOverride: ""
-    resources:
-      requests:
-        cpu: 50m
-        memory: 512Mi
+        memory: 1Gi
+  
+  aclConfigMapEnabled: true
+
+  config:
+    ## brokerClusterName brokerName brokerRole brokerId 由内置脚本自动生成
+    deleteWhen: "04"
+    fileReservedTime: "48"
+    flushDiskType: "ASYNC_FLUSH"
+    waitTimeMillsInSendQueue: "1000"
+    aclEnable: true
 
 nameserver:
-  replicaCount: 2
+  replicaCount: 1
   jvm:
     maxHeapSize: 512M
   resources:
     requests:
       cpu: 50m
-      memory: 512Mi
-
-proxy:
-  enabled: true
-  replicaCount: 2
-  jvm:
-    maxHeapSize: 256M
-  resources:
-    requests:
-      cpu: 50m
-      memory: 512Mi
+      memory: 1Gi
 
 dashboard:
   enabled: true

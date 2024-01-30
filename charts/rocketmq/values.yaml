@@ -3,7 +3,7 @@ clusterName: "rocketmq-cluster-a"
 image:
   repository: "apache/rocketmq"
   pullPolicy: IfNotPresent
-  tag: "4.9.7"
+  tag: "5.1.4"
 
 broker:
   size:
@@ -12,7 +12,6 @@ broker:
   
   master:
     brokerRole: ASYNC_MASTER
-    ## jvmMemory: "-Xms1g -Xmx1g"
     jvm:
       maxHeapSize: 1024M
       # javaOptsOverride: ""
@@ -25,7 +24,6 @@ broker:
         memory: 2Gi
   
   replica:
-    ## jvmMemory: "-Xms1g -Xmx1g"
     jvm:
       maxHeapSize: 1024M
       # javaOptsOverride: ""
@@ -42,14 +40,20 @@ broker:
     size: 20Gi
     #storageClass: "gp2"
   
+  aclConfigMapEnabled: false
+  aclConfig: |
+    globalWhiteRemoteAddresses:
+      - '*'
+      - 10.*.*.*
+      - 192.168.*.*
+
   config:
     ## brokerClusterName brokerName brokerRole brokerId 由内置脚本自动生成
     deleteWhen: "04"
     fileReservedTime: "48"
     flushDiskType: "ASYNC_FLUSH"
     waitTimeMillsInSendQueue: "1000"
-    #transientStorePoolEnable: "true"
-    #transferMsgByHeap: "false"
+    # aclEnable: true
 
   affinityOverride: {}
   tolerations: []
@@ -150,6 +154,14 @@ dashboard:
     requests:
       cpu: 20m
       memory: 512Mi
+
+  ## dashboard.readinessProbe
+  readinessProbe:
+    failureThreshold: 5
+    httpGet:
+      path: /
+      port: http
+  livenessProbe: {}
   
   service:
     annotations: {}

@@ -1,4 +1,4 @@
-## 已关闭持久化存储
+## minikube 部署测试
 
 broker:
   persistence:
@@ -17,26 +17,26 @@ broker:
 
   replica:
     jvm:
-      maxHeapSize: 512M
+      maxHeapSize: 300M
     resources:
       limits:
         cpu: 4
         memory: 16Gi
       requests:
         cpu: 50m
-        memory: 512Mi
+        memory: 300Mi
 
 nameserver:
-  replicaCount: 2
+  # replicaCount: 1
   jvm:
-    maxHeapSize: 512M
+    maxHeapSize: 300M
   resources:
     limits:
       cpu: 4
       memory: 16Gi
     requests:
       cpu: 50m
-      memory: 512Mi
+      memory: 300Mi
 
 proxy:
   enabled: true
@@ -49,11 +49,11 @@ proxy:
       memory: 16Gi
     requests:
       cpu: 50m
-      memory: 512Mi
+      memory: 256Mi
 
 dashboard:
   enabled: true
-  replicaCount: 1
+  # replicaCount: 1
   jvm:
     maxHeapSize: 256M
   resources:

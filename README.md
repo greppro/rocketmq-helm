@@ -61,18 +61,29 @@ helm upgrade --install rocketmq \
 
 ## 部署详情
 
-### RocketMQ 5.x Proxy
+### 集群外访问
 
-5.x 版本中新增了 Proxy 模块，默认不会部署，用户可以按需启用。
+可以将 proxy 暴露到集群外，支持 `LoadBalancer` 和 `NodePort`
+
+> proxy 是 RocketMQ 5.x 版本新增的模块，支持 grpc 和 remoting 协议，SDK接入请参考[官方文档](https://rocketmq.apache.org/zh/docs/sdk/01overview)
 
 ``` yaml
-image:
-  repository: apache/rocketmq
-  tag: 5.1.4
-
 proxy:
-  enabled: true
-  replicaCount: 1
+  service:
+    annotations: {}
+    type: LoadBalancer  ## LoadBalancer or NodePort
+```
+
+### 可选组件
+
+``` yaml
+## 关闭 proxy
+proxy:
+  enabled: false  ## 默认开启
+
+## 关闭 dashboard
+dashboard:
+  enabled: false  ## 默认开启
 ```
 
 ### 镜像仓库
@@ -80,7 +91,7 @@ proxy:
 ``` yaml
 image:
   repository: apache/rocketmq
-  tag: 4.9.7
+  tag: 5.1.4
 ```
 
 ### 部署特定版本
@@ -89,7 +100,7 @@ image:
 helm upgrade --install rocketmq \
   --namespace rocketmq-demo \
   --create-namespace \
-  --set image.tag="5.1.4" \
+  --set image.tag="5.2.0" \
   rocketmq-repo/rocketmq
 ```
 
@@ -149,8 +160,7 @@ broker:
 
 每个Master配置一个Slave，有多对Master-Slave，HA采用异步复制方式，主备有短暂消息延迟（毫秒级），这种模式的优缺点如下：
 
-- 优点：Master宕机后，消费者仍然可以从Slave消费，而且此过程对应用透明，不需要人工干预，性能同多Master模式几乎一样；
-- 缺点：Master宕机，磁盘损坏情况下会丢失少量消息 (已经同步到 Slave 的数据不受影响)
+- 优点：Master宕机后，消费者仍然可以从Slave消费，而且此过程对应用透明，不需要人工干预，性能同多Master模式几乎一样。
 
 ``` yaml
 broker:

@@ -1,0 +1,116 @@
+{{- $fullName := include "rocketmq.nameserver.fullname" . -}}
+{{- $clusterRole := "nameserver" -}}
+{{- $configmapName := include "rocketmq.configmap.fullname" . -}}
+{{- $image := printf "%s:%s" .Values.image.repository .Values.image.tag }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullName | quote }}
+  labels:
+    {{- include "rocketmq.labels" $ | nindent 4 }}
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: {{ .Values.nameserver.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
+      component: {{ $clusterRole }}
+  serviceName: {{ $fullName | quote }}
+  template:
+    metadata:
+      labels:
+        {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
+        component: {{ $clusterRole }}
+    spec:
+      {{- with $.Values.nameserver.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if not $.Values.nameserver.affinityOverride }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 5
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  {{- include "rocketmq.selectorLabels" $ | nindent 18 }}
+                  component: nameserver
+              topologyKey: kubernetes.io/hostname
+      {{- else if $.Values.nameserver.affinityOverride }}
+      affinity:
+        {{- toYaml $.Values.nameserver.affinityOverride | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.nameserver.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: nameserver
+        image: {{ $image | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        command:
+          - sh
+          - /mq-server-start.sh
+        env:
+        - name: ROCKETMQ_PROCESS_ROLE
+          value: {{ $clusterRole }}
+        - name: ROCKETMQ_JAVA_OPTIONS_HEAP
+          {{- $maxHeapSize := .Values.nameserver.jvm.maxHeapSize }}
+          value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
+        {{- if .Values.proxy.jvm.javaOptsOverride }}
+        - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
+          value: {{ .Values.proxy.jvm.javaOptsOverride }}
+        {{- end }}
+        ports:
+        - containerPort: 9876
+          name: main
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.nameserver.resources | nindent 10 }}
+        {{- with .Values.nameserver.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.nameserver.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 5; ./mqshutdown namesrv"]
+        volumeMounts:
+        - mountPath: /mq-server-start.sh
+          name: mq-server-start-sh
+          subPath: mq-server-start.sh
+        - mountPath: /home/rocketmq/logs
+          name: nameserver-storage
+          subPath: logs
+      dnsPolicy: ClusterFirst
+      terminationGracePeriodSeconds: {{ $.Values.nameserver.terminationGracePeriodSeconds | default 15 }}
+      volumes:
+      - configMap:
+          items:
+          - key: mq-server-start.sh
+            path: mq-server-start.sh
+          name: {{ $configmapName }}
+          defaultMode: 0755
+        name: mq-server-start-sh
+  {{- if not $.Values.nameserver.persistence.enabled }}
+      - name: nameserver-storage
+        emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: nameserver-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- with $.Values.nameserver.persistence.storageClass }}
+        storageClassName: {{ if (eq "-" .) }}""{{ else }}{{ . }}{{ end }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $.Values.nameserver.persistence.size | quote }}
+  {{- end }}

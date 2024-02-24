@@ -1,0 +1,182 @@
+clusterName: "rocketmq-helm"
+nameOverride: rocketmq
+
+image:
+  repository: "apache/rocketmq"
+  pullPolicy: IfNotPresent
+  tag: "5.1.4"
+
+broker:
+  size:
+    master: 2
+    replica: 1
+  
+  master:
+    brokerRole: ASYNC_MASTER
+    jvm:
+      maxHeapSize: 2048M
+      # javaOptsOverride: ""
+    resources:
+      limits:
+        cpu: 4
+        memory: 16Gi
+      requests:
+        cpu: 200m
+        memory: 3Gi
+  
+  replica:
+    jvm:
+      maxHeapSize: 1300M
+      # javaOptsOverride: ""
+    resources:
+      limits:
+        cpu: 4
+        memory: 16Gi
+      requests:
+        cpu: 50m
+        memory: 2Gi
+
+  persistence:
+    enabled: true
+    size: 20Gi
+    #storageClass: "gp2"
+  
+  aclConfigMapEnabled: false
+  aclConfig: |
+    globalWhiteRemoteAddresses:
+      - '*'
+      - 10.*.*.*
+      - 192.168.*.*
+
+  config:
+    ## brokerClusterName brokerName brokerRole brokerId 由内置脚本自动生成
+    deleteWhen: "04"
+    fileReservedTime: "48"
+    flushDiskType: "ASYNC_FLUSH"
+    waitTimeMillsInSendQueue: "1000"
+    # aclEnable: true
+
+  affinityOverride: {}
+  tolerations: []
+  nodeSelector: {}
+
+  ## broker.readinessProbe
+  readinessProbe:
+    tcpSocket:
+      port: main
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+nameserver:
+  replicaCount: 2
+
+  jvm:
+    maxHeapSize: 1300M
+    # javaOptsOverride: ""
+
+  resources:
+    limits:
+      cpu: 2
+      memory: 6Gi
+      ephemeral-storage: 8Gi
+    requests:
+      cpu: 100m
+      memory: 2Gi
+      ephemeral-storage: 1Gi
+  
+  persistence:
+    enabled: false
+    size: 8Gi
+    #storageClass: "gp2"
+
+  affinityOverride: {}
+  tolerations: []
+  nodeSelector: {}
+
+  ## nameserver.readinessProbe
+  readinessProbe:
+    tcpSocket:
+      port: main
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+proxy:
+  enabled: true
+  replicaCount: 2
+  jvm:
+    maxHeapSize: 1300M
+    # javaOptsOverride: ""
+
+  resources:
+    limits:
+      cpu: 2
+      memory: 6Gi
+    requests:
+      cpu: 100m
+      memory: 2Gi
+
+  affinityOverride: {}
+  tolerations: []
+  nodeSelector: {}
+
+  ## proxy.readinessProbe
+  readinessProbe:
+    tcpSocket:
+      port: main
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  ## proxy.service
+  service:
+    annotations: {}
+    type: ClusterIP
+
+dashboard:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: "apacherocketmq/rocketmq-dashboard"
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+
+  jvm:
+    maxHeapSize: 600M
+
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 20m
+      memory: 1Gi
+
+  ## dashboard.readinessProbe
+  readinessProbe:
+    failureThreshold: 5
+    httpGet:
+      path: /
+      port: http
+  livenessProbe: {}
+  
+  service:
+    annotations: {}
+    type: ClusterIP
+    # nodePort: 31007
+  
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+      # nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8,124.160.30.50
+    hosts:
+      - host: rocketmq-dashboard.example.com
+    tls: []
+    #  - secretName: example-tls
+    #    hosts:
+    #      - rocketmq-dashboard.example.com

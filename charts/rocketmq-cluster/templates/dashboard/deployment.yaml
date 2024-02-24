@@ -1,0 +1,46 @@
+{{- if .Values.dashboard.enabled -}}
+{{- $fullName := include "rocketmq.dashboard.fullname" . -}}
+{{- $nameserverFullName := include "rocketmq.nameserver.fullname" . -}}
+{{- $maxHeapSize := .Values.dashboard.jvm.maxHeapSize }}
+{{- $image := printf "%s:%s" .Values.dashboard.image.repository .Values.dashboard.image.tag }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName | quote }}
+  labels:
+    {{- include "rocketmq.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dashboard.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rocketmq.selectorLabels" . | nindent 6 }}
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        {{- include "rocketmq.selectorLabels" . | nindent 8 }}
+        component: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: {{ $image | quote }}
+        imagePullPolicy: {{ .Values.dashboard.image.pullPolicy | default "IfNotPresent" }}
+        env:
+        - name: JAVA_OPTS
+          value: {{ printf "-XX:MaxHeapSize=%s -Drocketmq.namesrv.addr=%s:9876" .Values.dashboard.jvm.maxHeapSize $nameserverFullName }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.dashboard.resources | nindent 10 }}
+        {{- with .Values.dashboard.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.dashboard.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.dashboard.terminationGracePeriodSeconds | default 5 }}
+{{- end }}

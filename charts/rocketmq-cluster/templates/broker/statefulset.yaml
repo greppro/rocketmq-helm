@@ -1,0 +1,182 @@
+{{- $fullName := include "rocketmq.fullname" . -}}
+{{- $clusterRole := "broker" -}}
+{{- $configmapName := include "rocketmq.configmap.fullname" . -}}
+{{- $masterSize := int .Values.broker.size.master -}}
+{{- $replicaCount := int (add1 .Values.broker.size.replica) -}}
+{{- $image := printf "%s:%s" .Values.image.repository .Values.image.tag -}}
+{{- range $brokerId := until $replicaCount -}}
+  {{- $brokerFullName := printf "%s-broker-master" $fullName -}}
+  {{- $maxHeapSize := $.Values.broker.master.jvm.maxHeapSize -}}
+  {{- $javaOptsOverride := $.Values.broker.master.jvm.javaOptsOverride -}}
+  {{- $brokerRole := $.Values.broker.master.brokerRole -}}
+  {{- $brokerConfigKey := "broker-master.conf" -}}
+  {{- if gt $brokerId 0 }}
+    {{- $brokerFullName = printf "%s-broker-replica-id%d" $fullName $brokerId -}}
+    {{- $maxHeapSize = $.Values.broker.replica.jvm.maxHeapSize -}}
+    {{- $javaOptsOverride = $.Values.broker.replica.jvm.javaOptsOverride -}}
+    {{- $brokerRole = "SLAVE" -}}
+    {{- $brokerConfigKey = "broker-slave.conf" -}}
+  {{- end }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $brokerFullName }}
+  labels:
+    {{- include "rocketmq.labels" $ | nindent 4 }}
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: {{ $masterSize }}
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
+      component: {{ $clusterRole }}
+      broker: {{ $brokerFullName }}
+  serviceName: ""
+  template:
+    metadata:
+      labels:
+        {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
+        component: {{ $clusterRole }}
+        broker: {{ $brokerFullName }}
+    spec:
+      {{- with $.Values.broker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if not $.Values.broker.affinityOverride }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 5
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  {{- include "rocketmq.selectorLabels" $ | nindent 18 }}
+                  component: broker
+              topologyKey: kubernetes.io/hostname
+      {{- else if $.Values.broker.affinityOverride }}
+      affinity:
+        {{- toYaml $.Values.broker.affinityOverride | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.broker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 3000
+        runAsUser: 3000
+      containers:
+      - name: broker
+        image: {{ $image | quote }}
+        imagePullPolicy: {{ $.Values.image.pullPolicy | default "IfNotPresent" }}
+        command:
+          - sh
+          - /mq-server-start.sh
+        env:
+        - name: ROCKETMQ_PROCESS_ROLE
+          value: {{ $clusterRole }}
+        - name: NAMESRV_ADDR
+          value: {{ include "rocketmq.nameserver.addr" $ }}
+        - name: ROCKETMQ_CONF_brokerId
+          value: {{ $brokerId | quote }}
+        - name: ROCKETMQ_CONF_brokerRole
+          value: {{ $brokerRole | quote }}
+        - name: ROCKETMQ_JAVA_OPTIONS_HEAP
+          value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
+        {{- if $javaOptsOverride }}
+        - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
+          value: {{ $javaOptsOverride }}
+        {{- end }}
+        {{- with $.Values.broker.commonEnvs }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $.Values.broker.extraEnvs }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        ports:
+        - containerPort: 10909
+          name: vip
+          protocol: TCP
+        - containerPort: 10911
+          name: main
+          protocol: TCP
+        - containerPort: 10912
+          name: ha
+          protocol: TCP
+        resources:
+        {{- if eq $brokerId 0 }}
+          {{- toYaml $.Values.broker.master.resources | nindent 10 }}
+        {{- else }}
+          {{- toYaml $.Values.broker.replica.resources | nindent 10 }}
+        {{- end }}
+        {{- with $.Values.broker.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with $.Values.broker.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 5; ./mqshutdown broker"]
+        volumeMounts:
+        - mountPath: /home/rocketmq/logs
+          name: broker-storage
+          subPath: rocketmq-broker/logs
+        - mountPath: /home/rocketmq/store
+          name: broker-storage
+          subPath: rocketmq-broker/store
+        - mountPath: /etc/rocketmq/broker-base.conf
+          name: broker-base-config
+          subPath: broker-base.conf
+        - mountPath: /mq-server-start.sh
+          name: mq-server-start-sh
+          subPath: mq-server-start.sh
+        {{- if $.Values.broker.aclConfigMapEnabled }}
+        - mountPath: /etc/rocketmq/acl
+          name: acl-config
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      terminationGracePeriodSeconds: {{ $.Values.broker.terminationGracePeriodSeconds | default 30 }}
+      volumes:
+      - configMap:
+          items:
+          - key: broker-base.conf
+            path: broker-base.conf
+          name: {{ $configmapName }}
+        name: broker-base-config
+      - configMap:
+          items:
+          - key: mq-server-start.sh
+            path: mq-server-start.sh
+          name: {{ $configmapName }}
+          defaultMode: 0755
+        name: mq-server-start-sh
+      {{- if $.Values.broker.aclConfigMapEnabled }}
+      - configMap:
+          name: {{ include "rocketmq.acl.configmap.fullname" $ }}
+        name: acl-config
+      {{- end }}
+  {{- if not $.Values.broker.persistence.enabled }}
+      - name: broker-storage
+        emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: broker-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- with $.Values.broker.persistence.storageClass }}
+        storageClassName: {{ if (eq "-" .) }}""{{ else }}{{ . }}{{ end }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $.Values.broker.persistence.size | quote }}
+  {{- end }}
+{{- end }}

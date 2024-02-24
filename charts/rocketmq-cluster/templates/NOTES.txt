@@ -1,0 +1,10 @@
+>>> Nameserver Address:
+  {{- printf "%s.%s:9876" (include "rocketmq.nameserver.fullname" .) (.Release.Namespace) | nindent 4 }}
+
+{{- if and (.Values.dashboard.enabled) (.Values.dashboard.ingress.enabled) }}
+
+>>> Visit RocketMQ Dashboard:
+  {{- range $host := .Values.dashboard.ingress.hosts }}
+    http{{ if $.Values.dashboard.ingress.tls }}s{{ end }}://{{ $host.host }}/
+  {{- end }}
+{{- end }}

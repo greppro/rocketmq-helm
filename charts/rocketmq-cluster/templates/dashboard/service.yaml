@@ -1,0 +1,28 @@
+{{- if .Values.dashboard.enabled -}}
+{{- $fullName := include "rocketmq.dashboard.fullname" . -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName| quote }}
+  labels:
+    {{- include "rocketmq.labels" . | nindent 4 }}
+    component: dashboard
+  {{- with .Values.dashboard.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.dashboard.service.type }}
+  type: {{ .Values.dashboard.service.type }}
+  {{- end }}
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+    {{- if and (eq .Values.dashboard.service.type "NodePort") .Values.dashboard.service.nodePort }}
+    nodePort: {{ .Values.dashboard.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "rocketmq.selectorLabels" . | nindent 4 }}
+    component: dashboard
+{{- end }}

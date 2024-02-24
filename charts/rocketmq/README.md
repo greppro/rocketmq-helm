@@ -33,27 +33,40 @@ helm upgrade --install rocketmq \
 helm upgrade --install rocketmq \
   --namespace rocketmq-demo \
   --create-namespace \
-  --set dashboard.enabled="true" \
-  --set dashboard.ingress.enabled="true" \
-  --set dashboard.ingress.hosts[0].host="rocketmq-demo.example.com" \
+  --set dashboard.enabled="true" \CR_RELEASE_NAME_TEMPLATE="rocketmq-demo.example.com" \
   rocketmq-repo/rocketmq
 ```
 
+### 部署高可用集群版
+
 ``` shell
-## 部署高可用集群, 多 Master 多 Slave
-## 3个 master 节点，每个 master 具有1个副节点，共6个 broker 节点
+## rocketmq-cluster 默认部署 2个 master 节点
+## 每个 master 具有1个副节点，共4个 broker 节点
+helm upgrade --install rocketmq \
+  --namespace rocketmq-demo \
+  --create-namespace \
+  rocketmq-repo/rocketmq-cluster
+
+```
+
+``` shell
+## 部署 3个 master 节点，每个 master 具有1个副节点，共6个 broker 节点
 helm upgrade --install rocketmq \
   --namespace rocketmq-demo \
   --create-namespace \
   --set broker.size.master="3" \
-  --set broker.size.replica="1" \
-  --set broker.master.jvmMemory="-Xms2g -Xmx2g" \
-  --set broker.master.resources.requests.memory="4Gi" \
-  --set nameserver.replicaCount="3" \
-  --set dashboard.enabled="true" \
-  --set dashboard.ingress.enabled="true" \
-  --set dashboard.ingress.hosts[0].host="rocketmq-ha.example.com" \
-  rocketmq-repo/rocketmq
+  rocketmq-repo/rocketmq-cluster
+
+```
+
+``` shell
+## 调整内存配额
+helm upgrade --install rocketmq \
+  --namespace rocketmq-demo \
+  --create-namespace \
+  --set broker.master.jvm.maxHeapSize="4G" \
+  --set broker.master.resources.requests.memory="6Gi" \
+  rocketmq-repo/rocketmq-cluster
 
 ```
 
@@ -61,18 +74,29 @@ helm upgrade --install rocketmq \
 
 ## 部署详情
 
-### RocketMQ 5.x Proxy
+### 集群外访问
 
-5.x 版本中新增了 Proxy 模块，默认不会部署，用户可以按需启用。
+可以将 proxy 暴露到集群外，支持 `LoadBalancer` 和 `NodePort`
+
+> proxy 是 RocketMQ 5.x 版本新增的模块，支持 grpc 和 remoting 协议，SDK接入请参考[官方文档](https://rocketmq.apache.org/zh/docs/sdk/01overview)
 
 ``` yaml
-image:
-  repository: apache/rocketmq
-  tag: 5.1.4
-
 proxy:
-  enabled: true
-  replicaCount: 1
+  service:
+    annotations: {}
+    type: LoadBalancer  ## LoadBalancer or NodePort
+```
+
+### 可选组件
+
+``` yaml
+## 关闭 proxy
+proxy:
+  enabled: false  ## 默认开启
+
+## 关闭 dashboard
+dashboard:
+  enabled: false  ## 默认开启
 ```
 
 ### 镜像仓库
@@ -80,7 +104,7 @@ proxy:
 ``` yaml
 image:
   repository: apache/rocketmq
-  tag: 4.9.7
+  tag: 5.1.4
 ```
 
 ### 部署特定版本
@@ -89,7 +113,7 @@ image:
 helm upgrade --install rocketmq \
   --namespace rocketmq-demo \
   --create-namespace \
-  --set image.tag="5.1.4" \
+  --set image.tag="5.2.0" \
   rocketmq-repo/rocketmq
 ```
 

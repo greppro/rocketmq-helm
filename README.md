@@ -92,11 +92,11 @@ proxy:
 ``` yaml
 ## 关闭 proxy
 proxy:
-  enabled: false  ## 默认开启
+  enabled: false  ## 默认 true
 
 ## 关闭 dashboard
 dashboard:
-  enabled: false  ## 默认开启
+  enabled: false  ## 默认 true
 ```
 
 ### 镜像仓库

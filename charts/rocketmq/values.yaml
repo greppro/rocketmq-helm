@@ -1,4 +1,4 @@
-clusterName: "rocketmq-cluster-a"
+clusterName: "rocketmq-helm"
 
 image:
   repository: "apache/rocketmq"
@@ -72,7 +72,7 @@ nameserver:
   replicaCount: 1
 
   jvm:
-    maxHeapSize: 1024M
+    maxHeapSize: 600M
     # javaOptsOverride: ""
 
   resources:
@@ -82,7 +82,7 @@ nameserver:
       ephemeral-storage: 8Gi
     requests:
       cpu: 100m
-      memory: 2Gi
+      memory: 1Gi
       ephemeral-storage: 1Gi
   
   persistence:
@@ -104,10 +104,10 @@ nameserver:
     failureThreshold: 3
 
 proxy:
-  enabled: false
+  enabled: true
   replicaCount: 1
   jvm:
-    maxHeapSize: 1024M
+    maxHeapSize: 600M
     # javaOptsOverride: ""
 
   resources:
@@ -116,7 +116,7 @@ proxy:
       memory: 6Gi
     requests:
       cpu: 100m
-      memory: 2Gi
+      memory: 1Gi
 
   affinityOverride: {}
   tolerations: []

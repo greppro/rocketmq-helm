@@ -33,7 +33,7 @@ helm upgrade --install rocketmq \
 helm upgrade --install rocketmq \
   --namespace rocketmq-demo \
   --create-namespace \
-  --set dashboard.enabled="true" \CR_RELEASE_NAME_TEMPLATE="rocketmq-demo.example.com" \
+  --set dashboard.enabled="true" \
   rocketmq-repo/rocketmq
 ```
 

@@ -3,8 +3,8 @@ name: rocketmq-cluster
 description: RocketMQ Helm chart
 type: application
 
-version: 11.0.2
-appVersion: '5.1.4'
+version: 11.1.0
+appVersion: '5.2.0'
 
 maintainers:
   - name: itboon

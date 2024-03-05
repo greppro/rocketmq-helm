@@ -2,7 +2,7 @@ clusterName: "cluster-test"
 
 image:
   repository: "apache/rocketmq"
-  tag: "4.9.7"
+  tag: "5.2.0"
 
 broker:
   size:

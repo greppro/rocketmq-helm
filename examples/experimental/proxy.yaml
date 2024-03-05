@@ -4,7 +4,7 @@ clusterName: "cluster-experimental"
 
 image:
   repository: "apache/rocketmq"
-  tag: "5.1.4"
+  tag: "5.2.0"
 
 broker:
   size:

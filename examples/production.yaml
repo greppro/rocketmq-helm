@@ -3,7 +3,7 @@ clusterName: "cluster-production"
 
 image:
   repository: "apache/rocketmq"
-  tag: "4.9.7"
+  tag: "5.2.0"
 
 broker:
   # 3个 master 节点，每个 master 具有1个副节点，共6个 broker 节点

@@ -5,7 +5,7 @@ clusterName: "cluster-experimental"
 image:
   # repository: "sir5kong/rocketmq"
   # pullPolicy: Always
-  tag: "5.1.4"
+  tag: "5.2.0"
 
 broker:
   size:

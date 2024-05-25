@@ -6,13 +6,21 @@
   {{- printf "%s.%s:8080" (include "rocketmq.proxy.fullname" .) (.Release.Namespace) | nindent 4 }}
 
 >>> Proxy gRPC Address:
-  {{- printf "%s.%s:8081" (include "rocketmq.proxy.fullname" .) (.Release.Namespace) | nindent 4 }}
+  {{- printf "%s.%s:8081\n" (include "rocketmq.proxy.fullname" .) (.Release.Namespace) | nindent 4 }}
 {{- end }}
 
-{{- if and (.Values.dashboard.enabled) (.Values.dashboard.ingress.enabled) }}
-
+{{- if .Values.dashboard.enabled }}
+{{- if .Values.dashboard.ingress.enabled }}
 >>> Visit RocketMQ Dashboard:
   {{- range $host := .Values.dashboard.ingress.hosts }}
     http{{ if $.Values.dashboard.ingress.tls }}s{{ end }}://{{ $host.host }}/
   {{- end }}
+{{- end }}
+
+{{- if and .Values.dashboard.auth .Values.dashboard.auth.enabled }}
+>>> RocketMQ Dashboard Auth:
+  {{- $adminUsername := .Values.dashboard.auth.adminUsername | default "mqadmin" }}
+  {{- $adminPassword := .Values.dashboard.auth.adminPassword | default "mqadmin" }}
+  {{- printf "username: %s password: %s" $adminUsername $adminPassword | nindent 4 }}
+{{- end }}
 {{- end }}

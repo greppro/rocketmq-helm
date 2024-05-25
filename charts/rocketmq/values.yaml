@@ -144,6 +144,11 @@ dashboard:
     pullPolicy: IfNotPresent
     tag: "1.0.0"
 
+  auth:
+    enabled: false
+    adminUsername: mqadmin
+    adminPassword: mqadmin
+
   jvm:
     maxHeapSize: 256M
 

@@ -1,0 +1,24 @@
+{{- if and .Values.dashboard.enabled .Values.dashboard.auth .Values.dashboard.auth.enabled -}}
+{{- $authValues := .Values.dashboard.auth -}}
+{{- $fullName := include "rocketmq.dashboard.configmap.fullname" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName| quote }}
+data:
+  {{- $adminUsername := $authValues.adminUsername | default "mqadmin" }}
+  {{- $adminPassword := $authValues.adminPassword | default "mqadmin" }}
+  {{- $guestUsername := $authValues.guestUsername | default "guest" }}
+  {{- $guestPassword := $authValues.guestPassword | default "rocketmq-helm" }}
+  users.properties: |
+  {{- if $authValues.userConfig }}
+    {{- $authValues.userConfig | nindent 4 }}
+  {{- else }}
+    {{ $adminUsername }}={{ $adminPassword }},1
+    {{ $guestUsername }}={{ $guestPassword }}
+  {{- end }}
+  {{- if $authValues.roleConfig }}
+  role-permission.yml: |
+    {{- $authValues.roleConfig | nindent 4 }}
+  {{- end }}
+{{- end }}

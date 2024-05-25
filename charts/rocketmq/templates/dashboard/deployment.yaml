@@ -28,6 +28,12 @@ spec:
         env:
         - name: JAVA_OPTS
           value: {{ printf "-XX:MaxHeapSize=%s -Drocketmq.namesrv.addr=%s:9876" .Values.dashboard.jvm.maxHeapSize $nameserverFullName }}
+        {{- if .Values.dashboard.auth.enabled }}
+        - name: rocketmq.config.loginRequired
+          value: "true"
+        - name: rocketmq.config.dataPath
+          value: {{ include "rocketmq.dashboard.dataPath" . }}
+        {{- end }}
         ports:
         - name: http
           containerPort: 8080
@@ -42,5 +48,16 @@ spec:
         readinessProbe:
           {{- toYaml . | nindent 12 }}
         {{- end }}
+        {{- if .Values.dashboard.auth.enabled }}
+        volumeMounts:
+        - mountPath: {{ include "rocketmq.dashboard.dataPath" . }}
+          name: dashboard-cm
+        {{- end }}
       terminationGracePeriodSeconds: {{ .Values.dashboard.terminationGracePeriodSeconds | default 5 }}
+      {{- if .Values.dashboard.auth.enabled }}
+      volumes:
+      - configMap:
+          name: {{ include "rocketmq.dashboard.configmap.fullname" . }}
+        name: dashboard-cm
+      {{- end }}
 {{- end }}

@@ -146,8 +146,12 @@ dashboard:
 
   auth:
     enabled: true
-    adminUsername: admin
-    adminPassword: admin
+    users:
+      - name: admin
+        password: admin
+        isAdmin: true
+      - name: user01
+        password: userPass
 
   jvm:
     maxHeapSize: 256M

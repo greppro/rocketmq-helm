@@ -108,8 +108,12 @@ dashboard:
   enabled: true
   auth:
     enabled: true
-    adminUsername: admin
-    adminPassword: admin
+    users:
+      - name: admin
+        password: admin
+        isAdmin: true
+      - name: user01
+        password: userPass
 ```
 
 ### 镜像仓库

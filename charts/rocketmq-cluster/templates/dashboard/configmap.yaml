@@ -6,19 +6,17 @@ kind: ConfigMap
 metadata:
   name: {{ $fullName| quote }}
 data:
-  {{- $adminUsername := $authValues.adminUsername | default "admin" }}
-  {{- $adminPassword := $authValues.adminPassword | default "admin" }}
-  {{- $guestUsername := $authValues.guestUsername | default "guest" }}
-  {{- $guestPassword := $authValues.guestPassword | default "guestPass" }}
+  {{- if .Values.dashboard.auth.users }}
   users.properties: |
-  {{- if $authValues.userConfig }}
-    {{- $authValues.userConfig | nindent 4 }}
+    {{- range .Values.dashboard.auth.users }}
+    {{ .name }}={{ .password }}{{ if .isAdmin }},1{{ end }}
+    {{- end }}
   {{- else }}
-    {{ $adminUsername }}={{ $adminPassword }},1
-    {{ $guestUsername }}={{ $guestPassword }}
+  users.properties: |
+    admin=admin,1
   {{- end }}
-  {{- if $authValues.roleConfig }}
+  {{- if .Values.dashboard.auth.roleConfig }}
   role-permission.yml: |
-    {{- $authValues.roleConfig | nindent 4 }}
+    {{- .Values.dashboard.auth.roleConfig | nindent 4 }}
   {{- end }}
 {{- end }}

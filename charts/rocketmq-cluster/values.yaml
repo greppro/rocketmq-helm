@@ -145,6 +145,11 @@ dashboard:
     pullPolicy: IfNotPresent
     tag: "1.0.0"
 
+  auth:
+    enabled: true
+    adminUsername: admin
+    adminPassword: admin
+
   jvm:
     maxHeapSize: 600M
 

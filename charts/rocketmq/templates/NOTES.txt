@@ -19,8 +19,9 @@
 
 {{- if and .Values.dashboard.auth .Values.dashboard.auth.enabled }}
 >>> RocketMQ Dashboard Auth:
-  {{- $adminUsername := .Values.dashboard.auth.adminUsername | default "mqadmin" }}
-  {{- $adminPassword := .Values.dashboard.auth.adminPassword | default "mqadmin" }}
+  {{- $adminUsername := .Values.dashboard.auth.adminUsername | default "admin" }}
+  {{- $adminPassword := .Values.dashboard.auth.adminPassword | default "admin" }}
   {{- printf "username: %s password: %s" $adminUsername $adminPassword | nindent 4 }}
+    Modify "{{ include "rocketmq.dashboard.configmap.fullname" . }}" configmap to change the password
 {{- end }}
 {{- end }}

@@ -145,9 +145,9 @@ dashboard:
     tag: "1.0.0"
 
   auth:
-    enabled: false
-    adminUsername: mqadmin
-    adminPassword: mqadmin
+    enabled: true
+    adminUsername: admin
+    adminPassword: admin
 
   jvm:
     maxHeapSize: 256M

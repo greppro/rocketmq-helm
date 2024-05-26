@@ -99,6 +99,19 @@ dashboard:
   enabled: false  ## 默认开启
 ```
 
+### Dashboard 登录认证
+
+Dashboard admin 帐号密码:
+
+``` yaml
+dashboard:
+  enabled: true
+  auth:
+    enabled: true
+    adminUsername: admin
+    adminPassword: admin
+```
+
 ### 镜像仓库
 
 ``` yaml

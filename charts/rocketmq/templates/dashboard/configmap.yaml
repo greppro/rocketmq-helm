@@ -15,8 +15,4 @@ data:
   users.properties: |
     admin=admin,1
   {{- end }}
-  {{- if .Values.dashboard.auth.roleConfig }}
-  role-permission.yml: |
-    {{- .Values.dashboard.auth.roleConfig | nindent 4 }}
-  {{- end }}
 {{- end }}

@@ -50,13 +50,17 @@ spec:
         {{- end }}
         {{- if .Values.dashboard.auth.enabled }}
         volumeMounts:
-        - mountPath: {{ include "rocketmq.dashboard.dataPath" . }}
+        - mountPath: "{{ include "rocketmq.dashboard.dataPath" . }}/users.properties"
           name: dashboard-cm
+          subPath: users.properties
         {{- end }}
       terminationGracePeriodSeconds: {{ .Values.dashboard.terminationGracePeriodSeconds | default 5 }}
       {{- if .Values.dashboard.auth.enabled }}
       volumes:
       - configMap:
+          items:
+          - key: users.properties
+            path: users.properties
           name: {{ include "rocketmq.dashboard.configmap.fullname" . }}
         name: dashboard-cm
       {{- end }}

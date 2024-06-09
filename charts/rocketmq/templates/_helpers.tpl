@@ -114,7 +114,7 @@ dashboard-cm
 dashboard
 */}}
 {{- define "rocketmq.dashboard.dataPath" -}}
-/opt/rocketmq/dashboard/data
+/tmp/rocketmq-console/data
 {{- end }}
 
 {{/*

@@ -9,6 +9,7 @@ metadata:
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
 spec:
+  minReadySeconds: {{ .Values.nameserver.minReadySeconds | default 10 }}
   podManagementPolicy: OrderedReady
   replicas: {{ .Values.nameserver.replicaCount }}
   selector:

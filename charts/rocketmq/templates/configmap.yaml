@@ -16,15 +16,15 @@ data:
     java -version
     if [ $? -ne 0 ]; then
       echo "[ERROR] Missing java runtime"
-      exit 500
+      exit 50
     fi
     if [ -z "${ROCKETMQ_HOME}" ]; then
       echo "[ERROR] Missing env ROCKETMQ_HOME"
-      exit 500
+      exit 50
     fi
     if [ -z "${ROCKETMQ_PROCESS_ROLE}" ]; then
       echo "[ERROR] Missing env ROCKETMQ_PROCESS_ROLE"
-      exit 500
+      exit 50
     fi
 
     export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
@@ -54,6 +54,9 @@ data:
       echo "" >> ${BROKER_CONF_FILE}
       echo "# generated config" >> ${BROKER_CONF_FILE}
       broker_name_seq=${HOSTNAME##*-}
+      if [ -n "$MY_POD_NAME" ]; then
+        broker_name_seq=${MY_POD_NAME##*-}
+      fi
       update_broker_conf "brokerName" "broker-g${broker_name_seq}"
       if [ "${ROCKETMQ_CONF_brokerRole}" == "SLAVE" ]; then
         update_broker_conf "brokerRole" "SLAVE"
@@ -96,5 +99,5 @@ data:
       fi
     else
       echo "[ERROR] Missing env ROCKETMQ_PROCESS_ROLE"
-      exit 500
+      exit 50
     fi

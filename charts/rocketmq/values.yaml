@@ -35,6 +35,8 @@ broker:
         cpu: 50m
         memory: 2Gi
 
+  hostNetwork: false
+  
   persistence:
     enabled: true
     size: 20Gi

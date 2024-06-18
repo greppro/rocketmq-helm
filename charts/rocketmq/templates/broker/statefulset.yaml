@@ -25,6 +25,7 @@ metadata:
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
 spec:
+  minReadySeconds: {{ $.Values.broker.minReadySeconds | default 10 }}
   podManagementPolicy: OrderedReady
   replicas: {{ $masterSize }}
   updateStrategy:
@@ -76,6 +77,10 @@ spec:
           - sh
           - /mq-server-start.sh
         env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: ROCKETMQ_PROCESS_ROLE
           value: {{ $clusterRole }}
         - name: NAMESRV_ADDR
@@ -141,7 +146,12 @@ spec:
         - mountPath: /etc/rocketmq/acl
           name: acl-config
         {{- end }}
-      dnsPolicy: ClusterFirst
+      {{- if $.Values.broker.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- else }}
+      dnsPolicy: {{ $.Values.broker.dnsPolicy | default "ClusterFirst" }}
+      {{- end }}
       terminationGracePeriodSeconds: {{ $.Values.broker.terminationGracePeriodSeconds | default 30 }}
       volumes:
       - configMap:

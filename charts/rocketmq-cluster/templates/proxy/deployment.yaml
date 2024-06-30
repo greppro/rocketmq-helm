@@ -10,6 +10,7 @@ metadata:
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
 spec:
+  minReadySeconds: {{ .Values.nameserver.minReadySeconds | default 10 }}
   replicas: {{ .Values.proxy.replicaCount }}
   selector:
     matchLabels:

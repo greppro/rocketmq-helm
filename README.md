@@ -76,9 +76,11 @@ helm upgrade --install rocketmq \
 
 ### 集群外访问
 
+#### 通过 proxy 实现集群外访问
+
 可以将 proxy 暴露到集群外，支持 `LoadBalancer` 和 `NodePort`
 
-> proxy 是 RocketMQ 5.x 版本新增的模块，支持 grpc 和 remoting 协议，SDK接入请参考[官方文档](https://rocketmq.apache.org/zh/docs/sdk/01overview)
+> proxy 是 RocketMQ 5.x 版本新增的模块，这种模式能够更好的适应复杂的网络环境，尤其是 k8s 集群内外互通，详情请参考[官方文档](https://rocketmq.apache.org/version/#whats-new-in-rocketmq-50)
 
 ``` yaml
 proxy:
@@ -86,6 +88,19 @@ proxy:
     annotations: {}
     type: LoadBalancer  ## LoadBalancer or NodePort
 ```
+
+#### hostNetwork
+
+broker 支持 `hostNetwork`，即 pod 使用主机网络命名空间，这种方式的缺点是每个 node 节点最多只能调度一个 broker
+
+``` yaml
+broker:
+  hostNetwork: true
+```
+
+建议优先使用 proxy 实现集群外访问，`hostNetwork` 作为向下兼容的备选方案。
+
+> 仅 broker 支持 `hostNetwork`，其他组件可以使用 `NodePort`
 
 ### 可选组件
 

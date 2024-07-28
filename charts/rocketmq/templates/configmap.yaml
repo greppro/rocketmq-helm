@@ -31,7 +31,7 @@ data:
     export CLASSPATH=".:${ROCKETMQ_HOME}/conf:${ROCKETMQ_HOME}/lib/*:${CLASSPATH}"
 
     JAVA_OPT="${JAVA_OPT} -server"
-    if [[ -n $ROCKETMQ_JAVA_OPTIONS_OVERRIDE ]]; then
+    if [ -n $ROCKETMQ_JAVA_OPTIONS_OVERRIDE ]; then
       JAVA_OPT="${JAVA_OPT} ${ROCKETMQ_JAVA_OPTIONS_OVERRIDE}"
     else
       JAVA_OPT="${JAVA_OPT} -XX:+UseG1GC"
@@ -58,9 +58,9 @@ data:
         broker_name_seq=${MY_POD_NAME##*-}
       fi
       update_broker_conf "brokerName" "broker-g${broker_name_seq}"
-      if [ "${ROCKETMQ_CONF_brokerRole}" == "SLAVE" ]; then
+      if [ "${ROCKETMQ_CONF_brokerRole}" = "SLAVE" ]; then
         update_broker_conf "brokerRole" "SLAVE"
-      elif [ "${ROCKETMQ_CONF_brokerRole}" == "SYNC_MASTER" ]; then
+      elif [ "${ROCKETMQ_CONF_brokerRole}" = "SYNC_MASTER" ]; then
         update_broker_conf "brokerRole" "SYNC_MASTER"
       else
         update_broker_conf "brokerRole" "ASYNC_MASTER"
@@ -73,26 +73,26 @@ data:
     }
 
     init_acl_conf() {
-      if [[ -f /etc/rocketmq/acl/plain_acl.yml ]]; then
+      if [ -f /etc/rocketmq/acl/plain_acl.yml ]; then
         rm -f "${ROCKETMQ_HOME}/conf/plain_acl.yml"
         ln -sf "/etc/rocketmq/acl" "${ROCKETMQ_HOME}/conf/acl"
       fi
     }
 
-    if [[ "$ROCKETMQ_PROCESS_ROLE" == "broker" ]]; then
+    if [ "$ROCKETMQ_PROCESS_ROLE" = "broker" ]; then
       init_broker_conf
       init_acl_conf
       set -x
       java ${JAVA_OPT} org.apache.rocketmq.broker.BrokerStartup -c ${BROKER_CONF_FILE}
-    elif [[ "$ROCKETMQ_PROCESS_ROLE" == "nameserver" ]]; then
+    elif [ "$ROCKETMQ_PROCESS_ROLE" = "nameserver" ]; then
       set -x
       java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup
-    elif [[ "$ROCKETMQ_PROCESS_ROLE" == "mqnamesrv" ]]; then
+    elif [ "$ROCKETMQ_PROCESS_ROLE" = "mqnamesrv" ]; then
       set -x
       java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup
-    elif  [[ "$ROCKETMQ_PROCESS_ROLE" == "proxy" ]]; then
+    elif  [ "$ROCKETMQ_PROCESS_ROLE" = "proxy" ]; then
       set -x
-      if [[ -f $RMQ_PROXY_CONFIG_PATH ]]; then
+      if [ -f $RMQ_PROXY_CONFIG_PATH ]; then
         java ${JAVA_OPT} org.apache.rocketmq.proxy.ProxyStartup -pc $RMQ_PROXY_CONFIG_PATH
       else
         java ${JAVA_OPT} org.apache.rocketmq.proxy.ProxyStartup

@@ -1,28 +1,50 @@
 {{- if .Values.dashboard.enabled -}}
-{{- $fullName := include "rocketmq.dashboard.fullname" . -}}
+{{- with .Values.dashboard.service -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $fullName| quote }}
+  name: {{ include "rocketmq.dashboard.fullname" $ }}
   labels:
-    {{- include "rocketmq.labels" . | nindent 4 }}
+    {{- include "rocketmq.labels" $ | nindent 4 }}
     component: dashboard
-  {{- with .Values.dashboard.service.annotations }}
+    {{- with .labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.dashboard.service.type }}
-  type: {{ .Values.dashboard.service.type }}
-  {{- end }}
   ports:
   - port: 8080
     protocol: TCP
     targetPort: 8080
-    {{- if and (eq .Values.dashboard.service.type "NodePort") .Values.dashboard.service.nodePort }}
-    nodePort: {{ .Values.dashboard.service.nodePort }}
+    {{- if and (eq .type "NodePort") .nodePort }}
+    nodePort: {{ .nodePort }}
     {{- end }}
+  {{- with .additionalPorts }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   selector:
-    {{- include "rocketmq.selectorLabels" . | nindent 4 }}
+    {{- include "rocketmq.selectorLabels" $ | nindent 4 }}
     component: dashboard
+  {{- with .type }}
+  type: {{ . | quote }}
+  {{- end }}
+  {{- with .clusterIP }}
+  clusterIP: {{ . | quote }}
+  {{- end }}
+  {{- if and (eq "LoadBalancer" .type) .loadBalancerIP }}
+  loadBalancerIP: {{ .loadBalancerIP | quote }}
+  {{- end }}
+  {{- with .loadBalancerClass }}
+  loadBalancerClass: {{ . | quote }}
+  {{- end }}
+  {{- with .externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . | quote }}
+  {{- end }}
+  {{- with .sessionAffinity }}
+  sessionAffinity: {{ . | quote }}
+  {{- end }}
+{{- end }}
 {{- end }}

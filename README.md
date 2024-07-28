@@ -86,7 +86,7 @@ helm upgrade --install rocketmq \
 proxy:
   service:
     annotations: {}
-    type: LoadBalancer  ## LoadBalancer or NodePort
+    type: NodePort  ## LoadBalancer or NodePort
 ```
 
 #### hostNetwork
@@ -96,6 +96,10 @@ broker 支持 `hostNetwork`，即 pod 使用主机网络命名空间，这种方
 ``` yaml
 broker:
   hostNetwork: true
+
+nameserver:
+  service:
+    type: NodePort  ## LoadBalancer or NodePort
 ```
 
 建议优先使用 proxy 实现集群外访问，`hostNetwork` 作为向下兼容的备选方案。
@@ -136,7 +140,8 @@ dashboard:
 ``` yaml
 image:
   repository: apache/rocketmq
-  tag: 5.1.4
+  # tag: 5.2.0
+  tag: 4.9.7
 ```
 
 ### 部署特定版本

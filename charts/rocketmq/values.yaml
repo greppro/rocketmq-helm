@@ -105,6 +105,11 @@ nameserver:
     timeoutSeconds: 3
     failureThreshold: 6
 
+  ## nameserver.service
+  service:
+    annotations: {}
+    type: ClusterIP
+
 proxy:
   enabled: true
   replicaCount: 1

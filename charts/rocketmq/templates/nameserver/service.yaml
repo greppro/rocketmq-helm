@@ -1,15 +1,45 @@
+{{- with .Values.nameserver.service -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "rocketmq.nameserver.fullname" . }}
+  name: {{ include "rocketmq.nameserver.fullname" $ }}
   labels:
-    {{- include "rocketmq.labels" . | nindent 4 }}
+    {{- include "rocketmq.labels" $ | nindent 4 }}
     component: nameserver
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - port: 9876
     protocol: TCP
     targetPort: 9876
+    {{- if and (eq .type "NodePort") .nodePort }}
+    nodePort: {{ .nodePort }}
+    {{- end }}
+  {{- with .additionalPorts }}
+  {{ toYaml . | nindent 2 }}
+  {{- end }}
   selector:
-    {{- include "rocketmq.selectorLabels" . | nindent 4 }}
+    {{- include "rocketmq.selectorLabels" $ | nindent 4 }}
     component: nameserver
+  {{- with .type }}
+  type: {{ . | quote }}
+  {{- end }}
+  {{- with .clusterIP }}
+  clusterIP: {{ . | quote }}
+  {{- end }}
+  {{- if and (eq "LoadBalancer" .type) .loadBalancerIP }}
+  loadBalancerIP: {{ .loadBalancerIP | quote }}
+  {{- end }}
+  {{- with .loadBalancerClass }}
+  loadBalancerClass: {{ . | quote }}
+  {{- end }}
+  {{- with .externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . | quote }}
+  {{- end }}
+  {{- with .sessionAffinity }}
+  sessionAffinity: {{ . | quote }}
+  {{- end }}
+{{- end }}

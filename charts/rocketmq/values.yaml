@@ -3,7 +3,7 @@ clusterName: "rocketmq-helm"
 image:
   repository: "apache/rocketmq"
   pullPolicy: IfNotPresent
-  tag: "5.2.0"
+  tag: "5.3.0"
 
 broker:
   size:

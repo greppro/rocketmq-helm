@@ -4,7 +4,7 @@ nameOverride: rocketmq
 image:
   repository: "apache/rocketmq"
   pullPolicy: IfNotPresent
-  tag: "5.2.0"
+  tag: "5.3.0"
 
 broker:
   size:
@@ -36,6 +36,8 @@ broker:
         cpu: 50m
         memory: 2Gi
 
+  hostNetwork: false
+
   persistence:
     enabled: true
     size: 20Gi
@@ -64,10 +66,10 @@ broker:
   readinessProbe:
     tcpSocket:
       port: main
-    initialDelaySeconds: 20
+    initialDelaySeconds: 10
     periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+    timeoutSeconds: 3
+    failureThreshold: 6
 
 nameserver:
   replicaCount: 2
@@ -99,10 +101,15 @@ nameserver:
   readinessProbe:
     tcpSocket:
       port: main
-    initialDelaySeconds: 20
+    initialDelaySeconds: 10
     periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+    timeoutSeconds: 3
+    failureThreshold: 6
+
+  ## nameserver.service
+  service:
+    annotations: {}
+    type: ClusterIP
 
 proxy:
   enabled: true
@@ -127,10 +134,10 @@ proxy:
   readinessProbe:
     tcpSocket:
       port: main
-    initialDelaySeconds: 20
+    initialDelaySeconds: 10
     periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 3
+    timeoutSeconds: 3
+    failureThreshold: 6
 
   ## proxy.service
   service:
@@ -167,7 +174,7 @@ dashboard:
 
   ## dashboard.readinessProbe
   readinessProbe:
-    failureThreshold: 5
+    failureThreshold: 6
     httpGet:
       path: /
       port: http

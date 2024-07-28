@@ -4,6 +4,10 @@ broker:
   persistence:
     enabled: false
 
+  size:
+    master: 2
+    replica: 1
+
   master:
     jvm:
       maxHeapSize: 512M

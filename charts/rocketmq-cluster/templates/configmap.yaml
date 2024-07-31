@@ -31,7 +31,7 @@ data:
     export CLASSPATH=".:${ROCKETMQ_HOME}/conf:${ROCKETMQ_HOME}/lib/*:${CLASSPATH}"
 
     JAVA_OPT="${JAVA_OPT} -server"
-    if [ -n $ROCKETMQ_JAVA_OPTIONS_OVERRIDE ]; then
+    if [ -n "$ROCKETMQ_JAVA_OPTIONS_OVERRIDE" ]; then
       JAVA_OPT="${JAVA_OPT} ${ROCKETMQ_JAVA_OPTIONS_OVERRIDE}"
     else
       JAVA_OPT="${JAVA_OPT} -XX:+UseG1GC"

@@ -6,6 +6,10 @@ metadata:
   name: {{ include "rocketmq.dashboard.fullname" $ | quote }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .replicaCount }}
   selector:
@@ -16,6 +20,10 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/dashboard/configmap.yaml") $ | sha256sum }}
+        {{- with .podAnnotations }}
+        annotations:
+          {{- toYaml . | nindent 4 }}
+        {{- end }}
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
         component: dashboard

@@ -1,0 +1,25 @@
+{{- $headless := .Values.nameserver.headlessService | default dict -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "rocketmq.nameserver.fullname" $ }}-headless"
+  labels:
+    {{- include "rocketmq.labels" $ | nindent 4 }}
+    component: nameserver
+  {{- with $headless.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  clusterIP: "None"
+  publishNotReadyAddresses: true
+  ports:
+  - port: 9876
+    protocol: TCP
+    targetPort: 9876
+  {{- with $headless.additionalPorts }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  selector:
+    {{- include "rocketmq.selectorLabels" $ | nindent 4 }}
+    component: nameserver

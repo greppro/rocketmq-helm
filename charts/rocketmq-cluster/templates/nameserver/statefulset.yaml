@@ -1,33 +1,47 @@
-{{- $fullName := include "rocketmq.nameserver.fullname" . -}}
+{{- with .Values.nameserver -}}
 {{- $clusterRole := "nameserver" -}}
-{{- $configmapName := include "rocketmq.configmap.fullname" . -}}
-{{- $image := printf "%s:%s" .Values.image.repository .Values.image.tag }}
+{{- $configmapName := include "rocketmq.configmap.fullname" $ -}}
+{{- $image := printf "%s:%s" $.Values.image.repository $.Values.image.tag }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ $fullName | quote }}
+  name: {{ include "rocketmq.nameserver.fullname" $ | quote }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  minReadySeconds: {{ .Values.nameserver.minReadySeconds | default 10 }}
-  podManagementPolicy: OrderedReady
-  replicas: {{ .Values.nameserver.replicaCount }}
+  minReadySeconds: {{ .minReadySeconds | default 20 }}
+  replicas: {{ .replicaCount }}
+  podManagementPolicy: {{ .podManagementPolicy | default "OrderedReady" }}
+  {{- with .updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
       component: {{ $clusterRole }}
-  serviceName: {{ $fullName | quote }}
+  serviceName: "{{ include "rocketmq.nameserver.fullname" $ }}-headless"
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- with .podAnnotations }}
+        annotations:
+          {{- toYaml . | nindent 4 }}
+        {{- end }}
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
         component: {{ $clusterRole }}
     spec:
-      {{- with $.Values.nameserver.nodeSelector }}
+      {{- with .nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if not $.Values.nameserver.affinityOverride }}
+      {{- if not .affinityOverride }}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -38,18 +52,18 @@ spec:
                   {{- include "rocketmq.selectorLabels" $ | nindent 18 }}
                   component: nameserver
               topologyKey: kubernetes.io/hostname
-      {{- else if $.Values.nameserver.affinityOverride }}
+      {{- else if .affinityOverride }}
       affinity:
-        {{- toYaml $.Values.nameserver.affinityOverride | nindent 8 }}
+        {{- toYaml .affinityOverride | nindent 8 }}
       {{- end }}
-      {{- with $.Values.nameserver.tolerations }}
+      {{- with .tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
       - name: nameserver
         image: {{ $image | quote }}
-        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        imagePullPolicy: {{ $.Values.image.pullPolicy | default "IfNotPresent" }}
         command:
           - sh
           - /mq-server-start.sh
@@ -57,23 +71,23 @@ spec:
         - name: ROCKETMQ_PROCESS_ROLE
           value: {{ $clusterRole }}
         - name: ROCKETMQ_JAVA_OPTIONS_HEAP
-          {{- $maxHeapSize := .Values.nameserver.jvm.maxHeapSize }}
+          {{- $maxHeapSize := .jvm.maxHeapSize }}
           value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
-        {{- if .Values.proxy.jvm.javaOptsOverride }}
+        {{- if and .jvm .jvm.javaOptsOverride }}
         - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
-          value: {{ .Values.proxy.jvm.javaOptsOverride }}
+          value: {{ .jvm.javaOptsOverride | quote }}
         {{- end }}
         ports:
         - containerPort: 9876
           name: main
           protocol: TCP
         resources:
-          {{- toYaml .Values.nameserver.resources | nindent 10 }}
-        {{- with .Values.nameserver.readinessProbe }}
+          {{- toYaml .resources | nindent 10 }}
+        {{- with .readinessProbe }}
         readinessProbe:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-        {{- with .Values.nameserver.livenessProbe }}
+        {{- with .livenessProbe }}
         livenessProbe:
           {{- toYaml . | nindent 10 }}
         {{- end }}
@@ -89,7 +103,7 @@ spec:
           name: nameserver-storage
           subPath: logs
       dnsPolicy: ClusterFirst
-      terminationGracePeriodSeconds: {{ $.Values.nameserver.terminationGracePeriodSeconds | default 15 }}
+      terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds | default 15 }}
       volumes:
       - configMap:
           items:
@@ -98,7 +112,7 @@ spec:
           name: {{ $configmapName }}
           defaultMode: 0755
         name: mq-server-start-sh
-  {{- if not $.Values.nameserver.persistence.enabled }}
+  {{- if not .persistence.enabled }}
       - name: nameserver-storage
         emptyDir: {}
   {{- else }}
@@ -108,10 +122,11 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        {{- with $.Values.nameserver.persistence.storageClass }}
+        {{- with .persistence.storageClass }}
         storageClassName: {{ if (eq "-" .) }}""{{ else }}{{ . }}{{ end }}
         {{- end }}
         resources:
           requests:
-            storage: {{ $.Values.nameserver.persistence.size | quote }}
+            storage: {{ .persistence.size | quote }}
   {{- end }}
+{{- end }}

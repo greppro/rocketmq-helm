@@ -24,12 +24,18 @@ metadata:
   name: {{ $brokerFullName }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
+  {{- with $.Values.broker.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  minReadySeconds: {{ $.Values.broker.minReadySeconds | default 10 }}
-  podManagementPolicy: OrderedReady
+  minReadySeconds: {{ $.Values.broker.minReadySeconds | default 20 }}
   replicas: {{ $masterSize }}
+  podManagementPolicy: {{ $.Values.broker.podManagementPolicy | default "OrderedReady" }}
+  {{- with $.Values.broker.updateStrategy }}
   updateStrategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
@@ -38,6 +44,12 @@ spec:
   serviceName: ""
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- with $.Values.broker.podAnnotations }}
+        annotations:
+          {{- toYaml . | nindent 4 }}
+        {{- end }}
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
         component: {{ $clusterRole }}

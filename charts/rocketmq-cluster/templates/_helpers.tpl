@@ -122,9 +122,12 @@ env NAMESRV_ADDR
 */}}
 {{- define "rocketmq.nameserver.addr" -}}
 {{- $nsFullName := include "rocketmq.nameserver.fullname" . -}}
-{{- $nsReplica := int .Values.nameserver.replicaCount -}}
-  {{- range $i := until $nsReplica -}}
-  {{- if gt $i 0 }}{{ printf ";" }}{{ end -}}
-  {{- printf "%s-%d.%s:9876" $nsFullName $i $nsFullName -}}
+{{- $headlessDomain := printf "%s-headless.%s.svc" $nsFullName .Release.Namespace -}}
+{{- $address := list -}}
+{{- $replicaCount := int .Values.nameserver.replicaCount -}}
+  {{- range $i := until $replicaCount -}}
+  {{- $address = printf "%s-%d.%s:9876" $nsFullName $i $headlessDomain | append $address -}}
   {{- end -}}
-{{- end }}
+{{- join ";" $address -}}
+{{- end -}}
+

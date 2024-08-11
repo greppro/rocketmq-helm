@@ -16,7 +16,7 @@ spec:
     matchLabels:
       {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
       component: {{ $clusterRole }}
-  serviceName: {{ $fullName | quote }}
+  serviceName: "{{ include "rocketmq.nameserver.fullname" $ }}-headless"
   template:
     metadata:
       labels:

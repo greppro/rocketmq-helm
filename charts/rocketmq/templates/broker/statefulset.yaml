@@ -107,6 +107,10 @@ spec:
         - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
           value: {{ $javaOptsOverride }}
         {{- end }}
+        {{- if and $.Values.broker.config.enableControllerMode }}
+        - name: enableControllerMode
+          value: "true"
+        {{- end }}
         {{- with $.Values.broker.commonEnvs }}
           {{- toYaml . | nindent 8 }}
         {{- end }}

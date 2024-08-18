@@ -1,11 +1,11 @@
-{{- with .Values.nameserver -}}
-{{- $clusterRole := "nameserver" -}}
-{{- $configmapName := include "rocketmq.configmap.fullname" $ -}}
+{{- with .Values.controller -}}
+{{- if and .enabled (not .enableControllerInNamesrv) -}}
+{{- $clusterRole := "controller" -}}
 {{- $image := printf "%s:%s" $.Values.image.repository $.Values.image.tag }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "rocketmq.nameserver.fullname" $ | quote }}
+  name: {{ include "rocketmq.controller.fullname" $ | quote }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
   {{- with .annotations }}
@@ -24,7 +24,7 @@ spec:
     matchLabels:
       {{- include "rocketmq.selectorLabels" $ | nindent 6 }}
       component: {{ $clusterRole }}
-  serviceName: "{{ include "rocketmq.nameserver.fullname" $ }}-headless"
+  serviceName: {{ include "rocketmq.controller.fullname" $ | quote }}
   template:
     metadata:
       annotations:
@@ -70,19 +70,20 @@ spec:
         env:
         - name: ROCKETMQ_PROCESS_ROLE
           value: {{ $clusterRole }}
+        - name: CONTROLLER_CONF_FILE
+          value: /etc/rocketmq/controller.conf
+        {{- if .jvm }}
+        {{- with .jvm.maxHeapSize }}
         - name: ROCKETMQ_JAVA_OPTIONS_HEAP
-          {{- $maxHeapSize := .jvm.maxHeapSize }}
-          value: {{ printf "-Xms%s -Xmx%s" $maxHeapSize $maxHeapSize }}
-        {{- if and .jvm .jvm.javaOptsOverride }}
-        - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
-          value: {{ .jvm.javaOptsOverride | quote }}
+          value: {{ printf "-Xms%s -Xmx%s" . . | quote }}
         {{- end }}
-        {{- if $.Values.controller.enableControllerInNamesrv }}
-        - name: enableControllerInNamesrv
-          value: "true"
+        {{- with .jvm.javaOptsOverride }}
+        - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
+          value: {{ . | quote }}
+        {{- end }}
         {{- end }}
         ports:
-        - containerPort: 9876
+        - containerPort: 9878
           name: main
           protocol: TCP
         resources:
@@ -98,21 +99,19 @@ spec:
         lifecycle:
           preStop:
             exec:
-              command: ["sh", "-c", "sleep 5; ./mqshutdown namesrv"]
+              command: ["sh", "-c", "sleep 5; ./mqshutdown controller"]
         volumeMounts:
         - mountPath: /mq-server-start.sh
           name: mq-server-start-sh
           subPath: mq-server-start.sh
         - mountPath: /etc/rocketmq/base-cm
           name: base-cm
-        - mountPath: /home/rocketmq/logs
-          name: nameserver-storage
-          subPath: logs
-        {{- if $.Values.controller.enableControllerInNamesrv }}
         - mountPath: /home/rocketmq/controller-data
-          name: nameserver-storage
+          name: data
           subPath: controller-data
-        {{- end }}
+        - mountPath: /home/rocketmq/logs
+          name: data
+          subPath: logs
       dnsPolicy: ClusterFirst
       terminationGracePeriodSeconds: {{ .terminationGracePeriodSeconds | default 15 }}
       volumes:
@@ -120,22 +119,24 @@ spec:
           items:
           - key: mq-server-start.sh
             path: mq-server-start.sh
-          name: {{ $configmapName }}
+          name: {{ include "rocketmq.configmap.fullname" $ }}
           defaultMode: 0755
         name: mq-server-start-sh
       - configMap:
           name: {{ include "rocketmq.configmap.fullname" $ }}
         name: base-cm
   {{- if not .persistence.enabled }}
-      - name: nameserver-storage
+      - name: data
         emptyDir: {}
   {{- else }}
   volumeClaimTemplates:
     - metadata:
-        name: nameserver-storage
+        name: data
       spec:
         accessModes:
-          - ReadWriteOnce
+          {{- range .persistence.accessModes }}
+          - {{ . | quote }}
+          {{- end }}
         {{- with .persistence.storageClass }}
         storageClassName: {{ if (eq "-" .) }}""{{ else }}{{ . }}{{ end }}
         {{- end }}
@@ -143,4 +144,5 @@ spec:
           requests:
             storage: {{ .persistence.size | quote }}
   {{- end }}
+{{- end }}
 {{- end }}

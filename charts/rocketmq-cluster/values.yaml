@@ -57,6 +57,7 @@ broker:
     flushDiskType: "ASYNC_FLUSH"
     waitTimeMillsInSendQueue: "1000"
     # aclEnable: true
+    # enableControllerMode: false
 
   affinityOverride: {}
   tolerations: []
@@ -72,10 +73,10 @@ broker:
     failureThreshold: 6
 
 nameserver:
-  replicaCount: 2
+  replicaCount: 3
 
   jvm:
-    maxHeapSize: 1300M
+    maxHeapSize: 600M
     # javaOptsOverride: ""
 
   resources:
@@ -85,12 +86,12 @@ nameserver:
       ephemeral-storage: 8Gi
     requests:
       cpu: 100m
-      memory: 2Gi
+      memory: 1Gi
       ephemeral-storage: 1Gi
   
   persistence:
     enabled: false
-    size: 8Gi
+    size: 20Gi
     #storageClass: "gp2"
 
   affinityOverride: {}
@@ -196,3 +197,44 @@ dashboard:
     #  - secretName: example-tls
     #    hosts:
     #      - rocketmq-dashboard.example.com
+
+
+## controller mode is an experimental feature
+controller:
+  enabled: false
+  enableControllerInNamesrv: false
+  replicaCount: 3
+  jvm:
+    maxHeapSize: 600M
+    # javaOptsOverride: ""
+  resources:
+    limits:
+      cpu: 2
+      memory: 6Gi
+    requests:
+      cpu: 100m
+      memory: 1Gi
+  persistence:
+    enabled: true
+    size: 20Gi
+    accessModes:
+      - ReadWriteOnce
+  
+  ## controller.service
+  service:
+    annotations: {}
+  
+  ## controller.config
+  config:
+    controllerDLegerGroup: group1
+    enableElectUncleanMaster: false
+    notifyBrokerRoleChanged: true
+  
+  ## controller.readinessProbe
+  readinessProbe:
+    tcpSocket:
+      port: main
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 6

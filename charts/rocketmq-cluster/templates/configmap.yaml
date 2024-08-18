@@ -4,10 +4,22 @@ metadata:
   name: {{ include "rocketmq.configmap.fullname" . }}
 data:
   broker-base.conf: |
-    brokerClusterName = {{ .Values.clusterName }}
 {{- range $key, $value := .Values.broker.config }}
     {{ $key }} = {{ $value }}
 {{- end }}
+{{- if and .Values.broker.config.enableControllerMode }}
+    controllerAddr = {{ include "rocketmq.broker.controllerAddr" . }}
+{{- end }}
+    brokerClusterName = {{ .Values.clusterName }}
+  controller-base.conf: |
+{{- range $key, $value := .Values.controller.config }}
+    {{ $key }} = {{ $value }}
+{{- end }}
+{{- if .Values.controller.enableControllerInNamesrv }}
+    enableControllerInNamesrv = true
+{{- end }}
+    controllerDLegerPeers = {{ include "rocketmq.controller.dlegerPeers" $ }}
+    controllerStorePath = /home/rocketmq/controller-data
   proxy.json: |
     {
       "rocketMQClusterName": "{{ .Values.clusterName }}"
@@ -41,11 +53,26 @@ data:
     JAVA_OPT="${JAVA_OPT} -cp ${CLASSPATH}"
 
     export BROKER_CONF_FILE="$HOME/broker.conf"
+    export CONTROLLER_CONF_FILE="$HOME/controller.conf"
+
     update_broker_conf() {
       local key=$1
       local value=$2
       sed -i "/^${key} *=/d" ${BROKER_CONF_FILE}
       echo "${key} = ${value}" >> ${BROKER_CONF_FILE}
+    }
+
+    init_broker_role() {
+      if [ "${ROCKETMQ_CONF_brokerRole}" = "SLAVE" ]; then
+        update_broker_conf "brokerRole" "SLAVE"
+      elif [ "${ROCKETMQ_CONF_brokerRole}" = "SYNC_MASTER" ]; then
+        update_broker_conf "brokerRole" "SYNC_MASTER"
+      else
+        update_broker_conf "brokerRole" "ASYNC_MASTER"
+      fi
+      if echo "${ROCKETMQ_CONF_brokerId}" | grep -E '^[0-9]+$'; then
+        update_broker_conf "brokerId" "${ROCKETMQ_CONF_brokerId}"
+      fi
     }
 
     init_broker_conf() {
@@ -58,15 +85,8 @@ data:
         broker_name_seq=${MY_POD_NAME##*-}
       fi
       update_broker_conf "brokerName" "broker-g${broker_name_seq}"
-      if [ "${ROCKETMQ_CONF_brokerRole}" = "SLAVE" ]; then
-        update_broker_conf "brokerRole" "SLAVE"
-      elif [ "${ROCKETMQ_CONF_brokerRole}" = "SYNC_MASTER" ]; then
-        update_broker_conf "brokerRole" "SYNC_MASTER"
-      else
-        update_broker_conf "brokerRole" "ASYNC_MASTER"
-      fi
-      if echo "${ROCKETMQ_CONF_brokerId}" | grep -E '^[0-9]+$'; then
-        update_broker_conf "brokerId" "${ROCKETMQ_CONF_brokerId}"
+      if [ "$enableControllerMode" != "true" ]; then
+        init_broker_role
       fi
       echo "[exec] cat ${BROKER_CONF_FILE}"
       cat ${BROKER_CONF_FILE}
@@ -79,17 +99,35 @@ data:
       fi
     }
 
+    init_controller_conf() {
+      rm -f ${CONTROLLER_CONF_FILE}
+      cp /etc/rocketmq/base-cm/controller-base.conf ${CONTROLLER_CONF_FILE}
+      controllerDLegerSelfId="n${HOSTNAME##*-}"
+      if [ -n "$MY_POD_NAME" ]; then
+        controllerDLegerSelfId="n${MY_POD_NAME##*-}"
+      fi
+      sed -i "/^controllerDLegerSelfId *=/d" ${CONTROLLER_CONF_FILE}
+      echo "controllerDLegerSelfId = ${controllerDLegerSelfId}" >> ${CONTROLLER_CONF_FILE}
+      cat ${CONTROLLER_CONF_FILE}
+    }
+
     if [ "$ROCKETMQ_PROCESS_ROLE" = "broker" ]; then
       init_broker_conf
       init_acl_conf
       set -x
       java ${JAVA_OPT} org.apache.rocketmq.broker.BrokerStartup -c ${BROKER_CONF_FILE}
-    elif [ "$ROCKETMQ_PROCESS_ROLE" = "nameserver" ]; then
+    elif [ "$ROCKETMQ_PROCESS_ROLE" = "controller" ]; then
+      init_controller_conf
       set -x
-      java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup
-    elif [ "$ROCKETMQ_PROCESS_ROLE" = "mqnamesrv" ]; then
+      java ${JAVA_OPT} org.apache.rocketmq.controller.ControllerStartup -c ${CONTROLLER_CONF_FILE}
+    elif [ "$ROCKETMQ_PROCESS_ROLE" = "nameserver" ] || [ "$ROCKETMQ_PROCESS_ROLE" = "mqnamesrv" ]; then
       set -x
-      java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup
+      if [ "$enableControllerInNamesrv" = "true" ]; then
+        init_controller_conf
+        java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup -c ${CONTROLLER_CONF_FILE}
+      else
+        java ${JAVA_OPT} org.apache.rocketmq.namesrv.NamesrvStartup
+      fi
     elif  [ "$ROCKETMQ_PROCESS_ROLE" = "proxy" ]; then
       set -x
       if [ -f $RMQ_PROXY_CONFIG_PATH ]; then

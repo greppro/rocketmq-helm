@@ -202,7 +202,7 @@ controller:
   enabled: false
   enableControllerInNamesrv: false
   jvm:
-    maxHeapSize: 500M
+    maxHeapSize: 600M
     # javaOptsOverride: ""
   resources:
     limits:

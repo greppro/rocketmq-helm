@@ -131,3 +131,59 @@ env NAMESRV_ADDR
 {{- join ";" $address -}}
 {{- end -}}
 
+
+{{/*
+controller
+*/}}
+{{- define "rocketmq.controller.fullname" -}}
+{{ include "rocketmq.fullname" . }}-controller
+{{- end -}}
+
+{{/*
+controller
+*/}}
+{{- define "rocketmq.enableControllerInNamesrv" -}}
+{{- if and .Values.controller.enabled .Values.controller.enableControllerInNamesrv -}}
+{{- print "true" -}}
+{{- else -}}
+{{- print "false" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+rocketmq.broker.controllerAddr
+*/}}
+{{- define "rocketmq.broker.controllerAddr" -}}
+{{- $address := list -}}
+  {{- $fullName := include "rocketmq.controller.fullname" . -}}
+  {{- $headlessDomain := printf "%s.%s.svc" $fullName .Release.Namespace -}}
+  {{- $replicaCount := int .Values.controller.replicaCount -}}
+{{- if eq (include "rocketmq.enableControllerInNamesrv" .) "true" -}}
+  {{- $fullName = include "rocketmq.nameserver.fullname" . -}}
+  {{- $headlessDomain = printf "%s-headless.%s.svc" $fullName .Release.Namespace -}}
+  {{- $replicaCount = int .Values.nameserver.replicaCount -}}
+{{- end -}}
+  {{- range $i := until $replicaCount -}}
+  {{- $address = printf "%s-%d.%s:9878" $fullName $i $headlessDomain | append $address -}}
+  {{- end -}}
+{{- join ";" $address -}}
+{{- end -}}
+
+{{/*
+rocketmq.controller.dlegerPeers
+*/}}
+{{- define "rocketmq.controller.dlegerPeers" -}}
+{{- $address := list -}}
+  {{- $fullName := include "rocketmq.controller.fullname" . -}}
+  {{- $headlessDomain := printf "%s.%s.svc" $fullName .Release.Namespace -}}
+  {{- $replicaCount := int .Values.controller.replicaCount -}}
+{{- if eq (include "rocketmq.enableControllerInNamesrv" .) "true" -}}
+  {{- $fullName = include "rocketmq.nameserver.fullname" . -}}
+  {{- $headlessDomain = printf "%s-headless.%s.svc" $fullName .Release.Namespace -}}
+  {{- $replicaCount = int .Values.nameserver.replicaCount -}}
+{{- end -}}
+  {{- range $i := until $replicaCount -}}
+  {{- $address = printf "n%d-%s-%d.%s:9878" $i $fullName $i $headlessDomain | append $address -}}
+  {{- end -}}
+{{- join ";" $address -}}
+{{- end -}}

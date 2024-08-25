@@ -57,7 +57,6 @@ broker:
     flushDiskType: "ASYNC_FLUSH"
     waitTimeMillsInSendQueue: "1000"
     # aclEnable: true
-    # enableControllerMode: false
 
   affinityOverride: {}
   tolerations: []
@@ -198,11 +197,10 @@ dashboard:
     #    hosts:
     #      - rocketmq-dashboard.example.com
 
-
 ## controller mode is an experimental feature
+controllerModeEnabled: false
 controller:
   enabled: false
-  enableControllerInNamesrv: false
   replicaCount: 3
   jvm:
     maxHeapSize: 600M

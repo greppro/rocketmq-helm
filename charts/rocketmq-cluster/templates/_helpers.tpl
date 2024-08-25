@@ -143,7 +143,7 @@ controller
 controller
 */}}
 {{- define "rocketmq.enableControllerInNamesrv" -}}
-{{- if and .Values.controller.enabled .Values.controller.enableControllerInNamesrv -}}
+{{- if and .Values.controllerModeEnabled (not .Values.controller.enabled) -}}
 {{- print "true" -}}
 {{- else -}}
 {{- print "false" -}}
@@ -187,3 +187,24 @@ rocketmq.controller.dlegerPeers
   {{- end -}}
 {{- join ";" $address -}}
 {{- end -}}
+
+{{/*
+rocketmq.noticeValues.controllerMode
+*/}}
+{{- define "rocketmq.noticeValues.controllerMode" -}}
+{{ if .Values.controllerModeEnabled }}
+Notice about controller mode:
+    Controller mode is an experimental feature, you can disable it (--set conrtollerModeEnabled=false)
+    If you decide to enable controller mode, you need to note:
+  {{- $brokerReplicaCount := .Values.broker.size.replica | int }}
+  {{- if lt $brokerReplicaCount 2 }}
+        The minimum number of replica is 1, and the recommended number of replica is 2
+        Please set a valid number of replica (--set broker.size.replica=2)
+  {{- end }}
+  {{- if eq (include "rocketmq.enableControllerInNamesrv" .) "true" }}
+        Controller roles require persistent storage (--set nameserver.persistence.enabled=true)
+  {{- else }}
+        Controller roles require persistent storage (--set controller.persistence.enabled=true)
+  {{- end }}
+{{- end }}
+{{- end }}

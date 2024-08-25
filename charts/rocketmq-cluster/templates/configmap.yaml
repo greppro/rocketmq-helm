@@ -7,7 +7,8 @@ data:
 {{- range $key, $value := .Values.broker.config }}
     {{ $key }} = {{ $value }}
 {{- end }}
-{{- if and .Values.broker.config.enableControllerMode }}
+{{- if and .Values.controllerModeEnabled }}
+    enableControllerMode = true
     controllerAddr = {{ include "rocketmq.broker.controllerAddr" . }}
 {{- end }}
     brokerClusterName = {{ .Values.clusterName }}
@@ -15,7 +16,7 @@ data:
 {{- range $key, $value := .Values.controller.config }}
     {{ $key }} = {{ $value }}
 {{- end }}
-{{- if .Values.controller.enableControllerInNamesrv }}
+{{- if eq (include "rocketmq.enableControllerInNamesrv" $) "true" }}
     enableControllerInNamesrv = true
 {{- end }}
     controllerDLegerPeers = {{ include "rocketmq.controller.dlegerPeers" $ }}

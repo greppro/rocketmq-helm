@@ -25,3 +25,12 @@
     Modify "{{ include "rocketmq.dashboard.configmap.fullname" . }}" configmap to change the password
 {{- end }}
 {{- end }}
+
+{{- if .Values.controllerModeEnabled }}
+{{- $brokerReplicaCount := .Values.broker.size.replica | int }}
+{{- if eq $brokerReplicaCount 0 }}
+{{ include "rocketmq.noticeValues.controllerMode" . | fail }}
+{{- else }}
+{{ include "rocketmq.noticeValues.controllerMode" . }}
+{{- end }}
+{{- end }}

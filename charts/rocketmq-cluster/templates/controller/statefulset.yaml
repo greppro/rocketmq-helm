@@ -1,5 +1,5 @@
 {{- with .Values.controller -}}
-{{- if and .enabled (not .enableControllerInNamesrv) -}}
+{{- if and .enabled -}}
 {{- $clusterRole := "controller" -}}
 {{- $image := printf "%s:%s" $.Values.image.repository $.Values.image.tag }}
 apiVersion: apps/v1

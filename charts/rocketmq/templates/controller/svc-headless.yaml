@@ -1,4 +1,4 @@
-{{- if and .Values.controller.enabled (not .Values.controller.enableControllerInNamesrv) -}}
+{{- if and .Values.controller.enabled -}}
 {{- with .Values.controller.service -}}
 apiVersion: v1
 kind: Service

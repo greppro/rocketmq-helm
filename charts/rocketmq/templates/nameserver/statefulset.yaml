@@ -77,7 +77,7 @@ spec:
         - name: ROCKETMQ_JAVA_OPTIONS_OVERRIDE
           value: {{ .jvm.javaOptsOverride | quote }}
         {{- end }}
-        {{- if $.Values.controller.enableControllerInNamesrv }}
+        {{- if eq (include "rocketmq.enableControllerInNamesrv" $) "true" }}
         - name: enableControllerInNamesrv
           value: "true"
         {{- end }}
@@ -108,7 +108,7 @@ spec:
         - mountPath: /home/rocketmq/logs
           name: nameserver-storage
           subPath: logs
-        {{- if $.Values.controller.enableControllerInNamesrv }}
+        {{- if eq (include "rocketmq.enableControllerInNamesrv" $) "true" }}
         - mountPath: /home/rocketmq/controller-data
           name: nameserver-storage
           subPath: controller-data

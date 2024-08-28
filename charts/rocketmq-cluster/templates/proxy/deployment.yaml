@@ -9,6 +9,9 @@ metadata:
   name: {{ include "rocketmq.proxy.fullname" $ | quote }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
+    {{- with .labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with .annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -29,12 +32,14 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
         {{- with .podAnnotations }}
-        annotations:
-          {{- toYaml . | nindent 4 }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
         component: {{ $clusterRole }}
+        {{- with .podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .nodeSelector }}
       nodeSelector:

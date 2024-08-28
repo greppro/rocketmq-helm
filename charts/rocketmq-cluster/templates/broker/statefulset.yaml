@@ -24,6 +24,9 @@ metadata:
   name: {{ $brokerFullName }}
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
+    {{- with $.Values.broker.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with $.Values.broker.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -47,13 +50,15 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
         {{- with $.Values.broker.podAnnotations }}
-        annotations:
-          {{- toYaml . | nindent 4 }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
         {{- include "rocketmq.selectorLabels" $ | nindent 8 }}
         component: {{ $clusterRole }}
         broker: {{ $brokerFullName }}
+        {{- with $.Values.broker.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with $.Values.broker.nodeSelector }}
       nodeSelector:

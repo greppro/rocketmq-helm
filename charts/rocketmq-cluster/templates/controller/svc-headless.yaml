@@ -7,6 +7,9 @@ metadata:
   labels:
     {{- include "rocketmq.labels" $ | nindent 4 }}
     component: controller
+    {{- with .labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with .annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

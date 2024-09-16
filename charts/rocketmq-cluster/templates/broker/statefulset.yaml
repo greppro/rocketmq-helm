@@ -84,12 +84,19 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        fsGroup: 3000
-        runAsUser: 3000
+        {{- if $.Values.broker.podSecurityContext }}
+        {{- toYaml $.Values.broker.podSecurityContext | nindent 8 }}
+        {{- else if $.Values.podSecurityContext }}
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+        {{- end }}
       containers:
       - name: broker
         image: {{ $image | quote }}
         imagePullPolicy: {{ $.Values.image.pullPolicy | default "IfNotPresent" }}
+        {{- with $.Values.broker.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         command:
           - sh
           - /mq-server-start.sh

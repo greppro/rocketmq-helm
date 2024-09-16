@@ -6,10 +6,17 @@ image:
   pullPolicy: IfNotPresent
   tag: "5.3.0"
 
+podSecurityContext:
+  fsGroup: 3000
+  runAsUser: 3000
+
 broker:
   size:
     master: 2
     replica: 1
+  
+  # podSecurityContext: {}
+  # containerSecurityContext: {}
   
   master:
     brokerRole: ASYNC_MASTER

@@ -5,10 +5,17 @@ image:
   pullPolicy: IfNotPresent
   tag: "5.3.0"
 
+podSecurityContext:
+  fsGroup: 3000
+  runAsUser: 3000
+
 broker:
   size:
     master: 1
     replica: 0
+  
+  # podSecurityContext: {}
+  # containerSecurityContext: {}
   
   master:
     brokerRole: ASYNC_MASTER
@@ -89,7 +96,7 @@ nameserver:
   
   persistence:
     enabled: false
-    size: 8Gi
+    size: 20Gi
     #storageClass: "gp2"
 
   affinityOverride: {}

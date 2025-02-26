@@ -223,6 +223,7 @@ broker:
 ## 可观测性
 ### [RocketMQ Exporter](https://github.com/apache/rocketmq-exporter)
 RocketMQ Exporter 是 Apache RocketMQ 的 Prometheus 监控导出器，用于收集 RocketMQ 集群的各项指标并供 Prometheus 抓取。
+相关grafana面板 [14612-rocketmq](https://grafana.com/grafana/dashboards/14612-rocketmq/) [10477-rocketmq-dashboard](https://grafana.com/grafana/dashboards/10477-rocketmq-dashboard/)
 本项目集成了 RocketMQ Exporter 并默认启用，可通过 `exporter` 配置项进行调整。
 对接promtheus需要支持serviceMonitor，请参考[Prometheus Operator](https://prometheus-operator.dev/) 或者手动配置prometheus
 ```
@@ -233,6 +234,9 @@ RocketMQ Exporter 是 Apache RocketMQ 的 Prometheus 监控导出器，用于收
         Env: 'develop'
         Cluster: 'local'
 ```
+image.png
+image.png
 ### [RocketMQ Dashboard](https://github.com/apache/rocketmq-dashboard)
 RocketMQ Dashboard 是 RocketMQ 的管控利器，为用户提供客户端和应用程序的各种事件、性能的统计信息，支持以可视化工具代替 Topic 配置、Broker 管理等命令行操作。
 本项目集成了 RocketMQ Dashboard 并默认启用，可通过 `dashboard` 配置项进行调整。
+image.png

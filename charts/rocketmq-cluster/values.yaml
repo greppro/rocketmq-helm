@@ -1,10 +1,10 @@
-clusterName: "rocketmq-helm"
+clusterName: "rocketmq-helm" # 集群名称
 nameOverride: rocketmq
 
 image:
   repository: "apache/rocketmq"
   pullPolicy: IfNotPresent
-  tag: "5.3.0"
+  tag: "5.3.0" # 镜像版本
 
 podSecurityContext:
   fsGroup: 3000
@@ -12,14 +12,14 @@ podSecurityContext:
 
 broker:
   size:
-    master: 2
-    replica: 1
-  
+    master: 2 # 主节点数量
+    replica: 1 # 每个主节点的从节点数量
+  # 2个 master 节点，每个 master 具有1个副节点，共4个 broker 节点 测试环境从节点可为0
   # podSecurityContext: {}
   # containerSecurityContext: {}
   
   master:
-    brokerRole: ASYNC_MASTER
+    brokerRole: ASYNC_MASTER # 主节点角色 ASYNC_MASTER（异步主机）无延迟、SYNC_MASTER（同步主机）有延迟
     jvm:
       maxHeapSize: 2048M
       # javaOptsOverride: ""
@@ -48,9 +48,9 @@ broker:
   persistence:
     enabled: true
     size: 20Gi
-    #storageClass: "gp2"
+    #storageClass: "" # 存储类型
   
-  aclConfigMapEnabled: false
+  aclConfigMapEnabled: false # 是否启用 ACL 配置
   aclConfig: |
     globalWhiteRemoteAddresses:
       - '*'
@@ -98,7 +98,7 @@ nameserver:
   persistence:
     enabled: false
     size: 20Gi
-    #storageClass: "gp2"
+    #storageClass: "" # 存储类型
 
   affinityOverride: {}
   tolerations: []
@@ -157,19 +157,19 @@ dashboard:
   image:
     repository: "apacherocketmq/rocketmq-dashboard"
     pullPolicy: IfNotPresent
-    tag: "1.0.0"
+    tag: "1.0.0" # 镜像版本
 
   auth:
-    enabled: true
+    enabled: true # 是否启用认证
     users:
       - name: admin
-        password: admin
+        password: admin # 管理员密码
         isAdmin: true
       - name: user01
-        password: userPass
+        password: userPass # 用户密码
 
   jvm:
-    maxHeapSize: 600M
+    maxHeapSize: 600M # JVM 堆内存大小
 
   resources:
     limits:
@@ -205,9 +205,9 @@ dashboard:
     #      - rocketmq-dashboard.example.com
 
 ## controller mode is an experimental feature
-controllerModeEnabled: false
+controllerModeEnabled: false # 是否启用 controller 模式
 controller:
-  enabled: false
+  enabled: false # 是否启用 controller
   replicaCount: 3
   jvm:
     maxHeapSize: 600M

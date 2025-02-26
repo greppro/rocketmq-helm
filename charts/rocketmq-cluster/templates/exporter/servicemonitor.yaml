@@ -20,7 +20,7 @@ spec:
           replacement: {{ .Values.exporter.serviceMonitor.env | quote }}
         - sourceLabels: [__name__]
           targetLabel: Cluster
-          replacement: {{ .Values.exporter.serviceMonitor.cluster | quote }}
+          replacement: {{ default .Values.clusterName .Values.exporter.serviceMonitor.cluster | quote }}
   selector:
     matchLabels:
       {{- include "rocketmq.selectorLabels" . | nindent 6 }}

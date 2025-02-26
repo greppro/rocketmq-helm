@@ -255,20 +255,19 @@ exporter:
   # Exporter 配置
   config:
     namesrvAddr: ""  # 默认使用集群内部 nameserver
-    rocketmqVersion: "rocketmq.config.rocketmqVersion:V5_3_0"
+    rocketmqVersion: "rocketmq.config.rocketmqVersion:V5_3_0" # rocketmq 版本 注：需要和 rocketmq 版本一致 否则会有部分指标不显示
     
   # 环境变量配置
   env: []
-  # - name: NAMESRV_ADDR
-  #   value: "custom-namesrv:9876"
+
   
   resources:
     limits:
-      cpu: 1
-      memory: 1Gi
+      cpu: 200m
+      memory: 512Mi
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
   
   service:
     type: ClusterIP
@@ -277,10 +276,10 @@ exporter:
   
   # Prometheus ServiceMonitor 配置
   serviceMonitor:
-    enabled: false
+    enabled: false 
     interval: 30s
     env: "prod"
-    cluster: "rocketmq"
+    # cluster: 默认使用 .Values.clusterName 的值
     additionalLabels: {}
     
   # 健康检查配置

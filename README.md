@@ -219,3 +219,20 @@ broker:
     replica: 1
 # 3个 master 节点，每个 master 具有1个副节点，共6个 broker 节点
 ```
+
+## 可观测性
+### [RocketMQ Exporter](https://github.com/apache/rocketmq-exporter)
+RocketMQ Exporter 是 Apache RocketMQ 的 Prometheus 监控导出器，用于收集 RocketMQ 集群的各项指标并供 Prometheus 抓取。
+本项目集成了 RocketMQ Exporter 并默认启用，可通过 `exporter` 配置项进行调整。
+对接promtheus需要支持serviceMonitor，请参考[Prometheus Operator](https://prometheus-operator.dev/) 或者手动配置prometheus
+```
+  - job_name: 'rocketmq-exporter'
+    static_configs:
+    - targets: ['localhost:5557']
+      labels:
+        Env: 'develop'
+        Cluster: 'local'
+```
+### [RocketMQ Dashboard](https://github.com/apache/rocketmq-dashboard)
+RocketMQ Dashboard 是 RocketMQ 的管控利器，为用户提供客户端和应用程序的各种事件、性能的统计信息，支持以可视化工具代替 Topic 配置、Broker 管理等命令行操作。
+本项目集成了 RocketMQ Dashboard 并默认启用，可通过 `dashboard` 配置项进行调整。

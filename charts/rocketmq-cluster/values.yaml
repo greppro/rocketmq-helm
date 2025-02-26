@@ -243,3 +243,72 @@ controller:
     periodSeconds: 10
     timeoutSeconds: 3
     failureThreshold: 6
+
+exporter:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: "apache/rocketmq-exporter"
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  
+  # Exporter 配置
+  config:
+    namesrvAddr: ""  # 默认使用集群内部 nameserver
+    rocketmqVersion: "rocketmq.config.rocketmqVersion:V5_3_0"
+    
+  # 环境变量配置
+  env: []
+  # - name: NAMESRV_ADDR
+  #   value: "custom-namesrv:9876"
+  
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  service:
+    type: ClusterIP
+    port: 5557
+    annotations: {}
+  
+  # Prometheus ServiceMonitor 配置
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    env: "prod"
+    cluster: "rocketmq"
+    additionalLabels: {}
+    
+  # 健康检查配置
+  livenessProbe:
+    httpGet:
+      path: /metrics
+      port: metrics
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+    
+  readinessProbe:
+    httpGet:
+      path: /metrics
+      port: metrics
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  # Pod 调度配置
+  affinity: {}
+  tolerations: []
+  nodeSelector: {}
+  
+  # 安全上下文配置
+  podSecurityContext: {}
+  containerSecurityContext: {}

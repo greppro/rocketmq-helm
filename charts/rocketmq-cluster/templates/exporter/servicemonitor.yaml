@@ -1,0 +1,28 @@
+{{- if and .Values.exporter.enabled .Values.exporter.serviceMonitor.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "rocketmq.fullname" . }}-exporter
+  labels:
+    {{- include "rocketmq.labels" . | nindent 4 }}
+    app.kubernetes.io/component: exporter
+    {{- with .Values.exporter.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+    - port: metrics
+      interval: {{ .Values.exporter.serviceMonitor.interval }}
+      path: {{ .Values.exporter.config.webTelemetryPath }}
+      relabelings:
+        - sourceLabels: [__name__]
+          targetLabel: Env
+          replacement: {{ .Values.exporter.serviceMonitor.env | quote }}
+        - sourceLabels: [__name__]
+          targetLabel: Cluster
+          replacement: {{ .Values.exporter.serviceMonitor.cluster | quote }}
+  selector:
+    matchLabels:
+      {{- include "rocketmq.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: exporter
+{{- end }} 

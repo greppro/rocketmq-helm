@@ -1,0 +1,19 @@
+{{- if .Values.exporter.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rocketmq.fullname" . }}-exporter
+  labels:
+    {{- include "rocketmq.labels" . | nindent 4 }}
+    app.kubernetes.io/component: exporter
+spec:
+  type: {{ .Values.exporter.service.type }}
+  ports:
+    - port: {{ .Values.exporter.service.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "rocketmq.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: exporter
+{{- end }} 
